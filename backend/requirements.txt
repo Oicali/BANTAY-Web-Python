@@ -1,0 +1,12 @@
+fastapi
+uvicorn[standard]
+asyncpg
+python-dotenv
+cloudinary
+python-jose[cryptography]
+bcrypt
+python-multipart
+aiosmtplib
+httpx
+python-docx
+openpyxl

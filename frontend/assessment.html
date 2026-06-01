@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Assessment Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #0f1923;
+    color: #e2e8f0;
+    font-family: 'DM Sans', 'Segoe UI', sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 24px;
+  }
+
+  /* ── AI CARD ── */
+  .cd-ai-card {
+    background: #131f2e;
+    border: 1px solid #1e3a5f;
+    border-radius: 12px;
+    padding: 28px 32px;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+
+  .cd-ai-card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #1e3a5f;
+  }
+
+  .cd-ai-card-header h3 {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+    margin-bottom: 4px;
+  }
+
+  .cd-ai-card-header p {
+    font-size: 12px;
+    color: #64748b;
+  }
+
+  .cd-ai-badge {
+    background: #1e3a5f;
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 10px;
+    border-radius: 20px;
+    border: 1px solid #2d5a9e;
+    white-space: nowrap;
+  }
+
+  /* ── SCOPE ── */
+  .cd-ai-scope {
+    display: flex;
+    gap: 24px;
+    background: #0f1923;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .cd-ai-scope-item {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .cd-ai-scope-label {
+    font-size: 10px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+  }
+
+  .cd-ai-scope-value {
+    font-size: 13px;
+    color: #cbd5e1;
+    font-weight: 500;
+  }
+
+  /* ── STAT ROW ── */
+  .cd-ai-stat-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .cd-ai-stat-box {
+    background: #0f1923;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .cd-ai-stat-box strong {
+    font-size: 22px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .cd-ai-stat-box span {
+    font-size: 11px;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  /* ── BLOCKS ── */
+  .cd-ai-block {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #1a2a3f;
+  }
+
+  .cd-ai-block:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+  }
+
+  .cd-ai-block h4 {
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 10px;
+  }
+
+  .cd-ai-block p {
+    font-size: 13.5px;
+    color: #cbd5e1;
+    line-height: 1.75;
+  }
+
+  /* ── CRIME BLOCK ── */
+  .cd-ai-crime-block {
+    background: #0f1923;
+    border: 1px solid #1a2a3f;
+    border-radius: 10px;
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+
+  .cd-ai-crime-block h4 {
+    font-size: 15px;
+    font-weight: 700;
+    color: #f1f5f9;
+    text-transform: none;
+    letter-spacing: 0;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #1e3a5f;
+  }
+
+  .cd-ai-quad-item {
+    margin-bottom: 12px;
+  }
+
+  .cd-ai-quad-label {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 700;
+    color: #3b82f6;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    background: #0c2240;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-bottom: 6px;
+  }
+
+  .cd-ai-quad-item p {
+    font-size: 13px;
+    color: #94a3b8;
+    line-height: 1.7;
+  }
+
+  /* ── SPARKLINE ── */
+  .cd-ai-sparkline-wrap {
+    background: #131f2e;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+  }
+
+  .cd-ai-sparkline-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+  }
+
+  .cd-ai-sparkline-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .cd-ai-sparkline-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  .badge-inc { color: #ef4444; background: #1f0a0a; }
+  .badge-dec { color: #22c55e; background: #0a1f0a; }
+  .badge-stable { color: #94a3b8; background: #1a2535; }
+
+  .cd-ai-sparkline-forecast {
+    font-size: 11px;
+    color: #64748b;
+    margin-left: auto;
+  }
+
+  .cd-ai-sparkline-forecast strong {
+    color: #f59e0b;
+  }
+
+  .sparkline-svg {
+    width: 100%;
+    height: 60px;
+  }
+
+  /* ═══════════════════════════════════════════════
+     NEW: BARANGAY RISK TABLE
+  ═══════════════════════════════════════════════ */
+
+  .brgy-risk-section {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid #1a2a3f;
+  }
+
+  .brgy-risk-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .brgy-risk-title {
+    font-size: 13px;
+    font-weight: 700;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  .brgy-risk-subtitle {
+    font-size: 11px;
+    color: #475569;
+    margin-top: 2px;
+  }
+
+  /* Backtest toggle */
+  .backtest-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: #0c2240;
+    border: 1px solid #1e3a5f;
+    color: #60a5fa;
+    font-size: 11px;
+    font-weight: 600;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .backtest-toggle-btn:hover { background: #1e3a5f; }
+
+  /* Backtest panel */
+  .backtest-panel {
+    background: #0a1422;
+    border: 1px solid #1e3a5f;
+    border-radius: 8px;
+    padding: 16px 20px;
+    margin-bottom: 16px;
+  }
+
+  .backtest-panel-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #60a5fa;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 12px;
+  }
+
+  .backtest-meta {
+    font-size: 11px;
+    color: #475569;
+    margin-bottom: 12px;
+  }
+
+  .backtest-metrics {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+
+  .backtest-metric-box {
+    background: #131f2e;
+    border: 1px solid #1a2a3f;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+
+  .backtest-metric-label {
+    font-size: 10px;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 4px;
+  }
+
+  .backtest-metric-val {
+    font-size: 18px;
+    font-weight: 700;
+    color: #f1f5f9;
+  }
+
+  .backtest-metric-sub {
+    font-size: 10px;
+    color: #22c55e;
+    margin-top: 2px;
+  }
+
+  .backtest-metric-sub.warn { color: #f59e0b; }
+
+  .backtest-note {
+    font-size: 11px;
+    color: #475569;
+    background: #131f2e;
+    border-left: 3px solid #1e3a5f;
+    padding: 8px 12px;
+    border-radius: 0 6px 6px 0;
+    line-height: 1.6;
+  }
+
+  .backtest-weeks {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+  }
+
+  .backtest-week-dot {
+    width: 18px;
+    height: 18px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    font-weight: 700;
+  }
+
+  .week-hit { background: #14532d; color: #4ade80; }
+  .week-miss { background: #450a0a; color: #f87171; }
+
+  /* Risk table */
+  .brgy-risk-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid #1a2a3f;
+  }
+
+  .brgy-risk-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .brgy-risk-table thead tr {
+    background: #0a1422;
+  }
+
+  .brgy-risk-table th {
+    padding: 10px 14px;
+    text-align: left;
+    font-size: 10px;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    border-bottom: 1px solid #1a2a3f;
+    white-space: nowrap;
+  }
+
+  .brgy-risk-table tbody tr {
+    border-bottom: 1px solid #0f1923;
+    transition: background 0.12s;
+    cursor: pointer;
+  }
+
+  .brgy-risk-table tbody tr:hover {
+    background: #0c1e2e;
+  }
+
+  .brgy-risk-table tbody tr:last-child {
+    border-bottom: none;
+  }
+
+  .brgy-risk-table td {
+    padding: 10px 14px;
+    vertical-align: middle;
+  }
+
+  /* Rank cell */
+  .td-rank {
+    color: #475569;
+    font-weight: 700;
+    font-size: 12px;
+    width: 32px;
+  }
+
+  /* Barangay name */
+  .td-brgy {
+    font-weight: 600;
+    color: #e2e8f0;
+    white-space: nowrap;
+  }
+
+  /* Risk score bar */
+  .risk-score-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 110px;
+  }
+
+  .risk-score-num {
+    font-size: 14px;
+    font-weight: 700;
+    min-width: 32px;
+    text-align: right;
+  }
+
+  .risk-bar-bg {
+    flex: 1;
+    height: 6px;
+    background: #1a2535;
+    border-radius: 3px;
+    overflow: hidden;
+    min-width: 50px;
+  }
+
+  .risk-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.3s;
+  }
+
+  .score-critical { color: #ef4444; }
+  .score-high     { color: #f97316; }
+  .score-medium   { color: #eab308; }
+  .score-low      { color: #64748b; }
+
+  .fill-critical { background: #ef4444; }
+  .fill-high     { background: #f97316; }
+  .fill-medium   { background: #eab308; }
+  .fill-low      { background: #475569; }
+
+  /* Crime type pills */
+  .crime-pills {
+    display: flex;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+
+  .crime-pill {
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .pill-murder   { background: #3f0e0e; color: #fca5a5; }
+  .pill-theft    { background: #0c2240; color: #93c5fd; }
+  .pill-rape     { background: #2d1054; color: #c4b5fd; }
+  .pill-robbery  { background: #1a2e0a; color: #86efac; }
+  .pill-homicide { background: #2c1a0a; color: #fdba74; }
+  .pill-scc      { background: #1a1a2e; color: #a5b4fc; }
+  .pill-pi       { background: #1a2a1a; color: #6ee7b7; }
+
+  /* Last incident */
+  .td-last {
+    color: #94a3b8;
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .last-recent { color: #ef4444; font-weight: 600; }
+  .last-week   { color: #f97316; font-weight: 600; }
+  .last-month  { color: #eab308; }
+  .last-old    { color: #64748b; }
+
+  /* Tier badge */
+  .tier-badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 4px;
+    letter-spacing: 0.05em;
+  }
+
+  .tier-sba    { background: #14532d; color: #4ade80; }
+  .tier-freq   { background: #422006; color: #fbbf24; }
+  .tier-sparse { background: #1e293b; color: #64748b; }
+
+  /* Why flagged */
+  .td-why {
+    font-size: 11.5px;
+    color: #64748b;
+    max-width: 200px;
+    line-height: 1.5;
+  }
+
+  /* Expand arrow */
+  .expand-arrow {
+    color: #334155;
+    font-size: 12px;
+    transition: transform 0.2s;
+  }
+
+  .row-expanded .expand-arrow { transform: rotate(180deg); }
+
+  /* Expanded sparkline row */
+  .sparkline-expand-row td {
+    padding: 0;
+    background: #0a1422;
+  }
+
+  .sparkline-expand-inner {
+    padding: 16px 20px;
+    border-top: 1px solid #1a2a3f;
+  }
+
+  .mini-spark {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 48px;
+    padding-top: 4px;
+  }
+
+  .spark-bar {
+    flex: 1;
+    background: #1e3a5f;
+    border-radius: 2px 2px 0 0;
+    min-height: 3px;
+    transition: background 0.15s;
+  }
+
+  .spark-bar:hover { background: #3b82f6; }
+  .spark-bar.forecast { background: #f59e0b; opacity: 0.7; }
+
+  .spark-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 9px;
+    color: #334155;
+    margin-top: 4px;
+  }
+
+  .spark-stat-row {
+    display: flex;
+    gap: 20px;
+    margin-top: 10px;
+  }
+
+  .spark-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .spark-stat-label {
+    font-size: 9px;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+  }
+
+  .spark-stat-val {
+    font-size: 13px;
+    font-weight: 700;
+    color: #cbd5e1;
+  }
+
+  /* ── SECTION DIVIDER ── */
+  .section-divider {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 24px 0 16px;
+  }
+
+  .section-divider-line {
+    flex: 1;
+    height: 1px;
+    background: #1a2a3f;
+  }
+
+  .section-divider-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #334155;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+  }
+
+  /* Confidence inline */
+  .confidence-chip {
+    font-size: 10px;
+    color: #64748b;
+    background: #0f1923;
+    border: 1px solid #1a2a3f;
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+
+  /* ECP flag */
+  .ecp-badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: #fca5a5;
+    background: #3f0e0e;
+    padding: 1px 6px;
+    border-radius: 4px;
+    margin-left: 6px;
+  }
+
+  .hidden { display: none; }
+</style>
+</head>
+<body>
+
+<div class="cd-ai-card">
+
+  <!-- HEADER -->
+  <div class="cd-ai-card-header">
+    <div>
+      <h3>AI Crime Assessment — Jan 1, 2024 to Aug 31, 2025</h3>
+      <p>Generated: September 1, 2025 at 08:14 AM · Groq · meta-llama/llama-4-scout-17b</p>
+    </div>
+    <span class="cd-ai-badge">AI Output</span>
+  </div>
+
+  <!-- SCOPE -->
+  <div class="cd-ai-scope">
+    <div class="cd-ai-scope-item">
+      <span class="cd-ai-scope-label">Date Range</span>
+      <span class="cd-ai-scope-value">Jan 1, 2024 – Aug 31, 2025</span>
+    </div>
+    <div class="cd-ai-scope-item">
+      <span class="cd-ai-scope-label">Crime Type</span>
+      <span class="cd-ai-scope-value">All Index Crimes</span>
+    </div>
+    <div class="cd-ai-scope-item">
+      <span class="cd-ai-scope-label">Barangay</span>
+      <span class="cd-ai-scope-value">All Barangays</span>
+    </div>
+  </div>
+
+  <!-- STAT ROW -->
+  <div class="cd-ai-stat-row">
+    <div class="cd-ai-stat-box">
+      <strong>234</strong>
+      <span>Total Incidents</span>
+    </div>
+    <div class="cd-ai-stat-box">
+      <strong>61.5%</strong>
+      <span>CCE</span>
+    </div>
+    <div class="cd-ai-stat-box">
+      <strong>24.4%</strong>
+      <span>CSE</span>
+    </div>
+    <div class="cd-ai-stat-box">
+      <strong>89</strong>
+      <span>Under Investigation</span>
+    </div>
+  </div>
+
+  <!-- OVERALL ASSESSMENT -->
+  <div class="cd-ai-block">
+    <h4>Overall Assessment</h4>
+    <p>From January 1, 2024 to August 31, 2025, a total of 234 incidents were recorded across all index crime categories, with an overall CCE of 61.5% and CSE of 24.4%, indicating that while clearance is adequate, solution rates remain below the 30% threshold warranting attention. Molino III requires immediate focus with 28 total incidents, the highest among all barangays, followed closely by Molino IV with 24 and San Nicolas III with 21. Peak criminal activity is concentrated on Saturdays, with December 2024 recording the highest monthly incident volume. The combination of a low overall CSE and an increasing trend in theft and rape warrants declaration of those categories as Emerging Crime Problems, requiring immediate adjustment to the Station Patrol Plan.</p>
+  </div>
+
+  <!-- ═══════════════════════════════════════════
+       NEW: BARANGAY RISK FORECAST TABLE
+  ═══════════════════════════════════════════ -->
+  <div class="brgy-risk-section">
+    <div class="brgy-risk-header">
+      <div>
+        <div class="brgy-risk-title">Top 15 High-Risk Barangays — Week Forecast</div>
+        <div class="brgy-risk-subtitle">Next 7 days · Ensemble model (SBA + Recency + Frequency) · Click any row to expand sparkline</div>
+      </div>
+      <button class="backtest-toggle-btn" onclick="toggleBacktest()">
+        ▸ Reliability Report
+      </button>
+    </div>
+
+    <!-- BACKTEST PANEL (hidden by default) -->
+    <div class="backtest-panel hidden" id="backtest-panel">
+      <div class="backtest-panel-title">Backtest Reliability Report</div>
+      <div class="backtest-meta">Training: Jan 2024 – Jun 2025 &nbsp;·&nbsp; Test period: Jul – Aug 2025 &nbsp;·&nbsp; 8 weekly folds &nbsp;·&nbsp; Walk-forward validation</div>
+
+      <div class="backtest-metrics">
+        <div class="backtest-metric-box">
+          <div class="backtest-metric-label">Hit Rate @ Top 5</div>
+          <div class="backtest-metric-val">63%</div>
+          <div class="backtest-metric-sub">↑ +28pp vs baseline</div>
+        </div>
+        <div class="backtest-metric-box">
+          <div class="backtest-metric-label">Hit Rate @ Top 10</div>
+          <div class="backtest-metric-val">81%</div>
+          <div class="backtest-metric-sub">↑ +19pp vs baseline</div>
+        </div>
+        <div class="backtest-metric-box">
+          <div class="backtest-metric-label">Avg Rank of Actual</div>
+          <div class="backtest-metric-val">7.2</div>
+          <div class="backtest-metric-sub warn">Random = 24.0</div>
+        </div>
+        <div class="backtest-metric-box">
+          <div class="backtest-metric-label">Weeks Model Won</div>
+          <div class="backtest-metric-val">6 / 8</div>
+          <div class="backtest-metric-sub">75% of test weeks</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom:10px">
+        <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px">Per-week result (green = model in top 10, red = miss)</div>
+        <div class="backtest-weeks">
+          <div class="backtest-week-dot week-hit" title="Jul 7: Hit">✓</div>
+          <div class="backtest-week-dot week-hit" title="Jul 14: Hit">✓</div>
+          <div class="backtest-week-dot week-miss" title="Jul 21: Miss">✗</div>
+          <div class="backtest-week-dot week-hit" title="Jul 28: Hit">✓</div>
+          <div class="backtest-week-dot week-hit" title="Aug 4: Hit">✓</div>
+          <div class="backtest-week-dot week-hit" title="Aug 11: Hit">✓</div>
+          <div class="backtest-week-dot week-miss" title="Aug 18: Miss">✗</div>
+          <div class="backtest-week-dot week-hit" title="Aug 25: Hit">✓</div>
+        </div>
+      </div>
+
+      <div class="backtest-note">
+        <strong style="color:#94a3b8">Data quality:</strong> 9 of 47 barangays have ≥10 incidents and use full SBA forecasting. 18 barangays use frequency-only prior. 20 barangays have &lt;5 incidents — scores for these are low-confidence estimates only.
+      </div>
+    </div>
+
+    <!-- RISK TABLE -->
+    <div class="brgy-risk-table-wrap">
+      <table class="brgy-risk-table" id="risk-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Barangay</th>
+            <th>Risk Score</th>
+            <th>Primary Risk</th>
+            <th>Last Incident</th>
+            <th>Model Tier</th>
+            <th>Why Flagged</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="risk-tbody">
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- SECTION DIVIDER -->
+  <div class="section-divider">
+    <div class="section-divider-line"></div>
+    <div class="section-divider-label">Per-Crime EMPO QUAD Assessment</div>
+    <div class="section-divider-line"></div>
+  </div>
+
+  <!-- PER CRIME BLOCKS -->
+
+  <!-- THEFT -->
+  <div class="cd-ai-crime-block">
+    <h4>Theft <span class="ecp-badge">ECP</span></h4>
+
+    <!-- Sparkline placeholder -->
+    <div class="cd-ai-sparkline-wrap">
+      <div class="cd-ai-sparkline-header">
+        <span class="cd-ai-sparkline-title">Weekly Trend</span>
+        <span class="cd-ai-sparkline-badge badge-inc">↑ Increasing</span>
+        <span class="cd-ai-sparkline-forecast">Forecast: <strong>3</strong> next week · 71% confidence (SBA)</span>
+      </div>
+      <svg class="sparkline-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
+        <polyline fill="none" stroke="#1e3a5f" stroke-width="1.5"
+          points="0,50 30,45 60,48 90,38 120,42 150,35 180,40 210,28 240,32 270,25 300,30 330,22 360,18 390,25 420,15 450,20 480,12 510,18 540,10"/>
+        <polyline fill="none" stroke="#ef4444" stroke-width="1" stroke-dasharray="4 3"
+          points="0,48 540,8"/>
+        <circle cx="570" cy="8" r="5" fill="#f59e0b"/>
+      </svg>
+      <div style="display:flex;gap:16px;font-size:10px;color:#334155;margin-top:4px">
+        <span><span style="display:inline-block;width:10px;height:2px;background:#1e3a5f;vertical-align:middle;margin-right:4px"></span>Actual</span>
+        <span><span style="display:inline-block;width:10px;height:1px;background:#ef4444;vertical-align:middle;margin-right:4px;border-top:1px dashed #ef4444"></span>Trend (SBA)</span>
+        <span><span style="display:inline-block;width:8px;height:8px;background:#f59e0b;border-radius:50%;vertical-align:middle;margin-right:4px"></span>Forecast</span>
+      </div>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Crime Assessment</span>
+      <p>Theft recorded 89 incidents (CCE 58.4%, CSE 18.0%) — the highest volume index crime in the station. Trend is increasing with a forecast of 3 incidents next week at 71% confidence, warranting ECP declaration given CSE below 30%. Peak activity occurs between 8:00 AM – 10:00 AM on Saturdays, concentrated in December 2024. Approximately 67% of theft incidents occur at commercial and business establishments, driven by the high foot traffic density in market corridors and retail areas, particularly in Molino III. The peak window at the top place type corresponds to market opening hours, a period of maximum commercial activity and reduced surveillance. The pattern is Moderately Concentrated — patrol scope must target Molino III commercial areas during morning market hours.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Operations</span>
+      <p>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Situation:</strong> Theft is concentrated at commercial establishments in Molino III during market opening hours — patrol must be deployed at corridors, not dispersed across barangay.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Mission:</strong> Reduce theft opportunity at commercial establishments in Molino III during the 8:00 AM – 10:00 AM peak window.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Execution:</strong> Deploy foot patrol along market corridors and commercial strips in Molino III during morning shift. Visible presence at store fronts and market entrances.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Must Do (1):</strong> At 7:45 AM – 8:30 AM, conduct foot patrol and target hardening check at commercial establishments in Molino III.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Must Do (2):</strong> At 9:00 AM – 10:00 AM, conduct visible presence patrol at market area in Molino III, focusing on Budgetlift and palengke entry points.</span>
+        <span style="display:block"><strong style="color:#94a3b8">Coordinating Instructions:</strong> Engage Barangay Tanods and BPATs for joint patrol. Activate Barangay Information Network (BIN) contacts near Molino III commercial strip.</span>
+      </p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Intelligence</span>
+      <p>Flag as ECP — trend is increasing and CSE is 18.0%. Brief patrollers on Shoplifting and Pickpocketing modus patterns at commercial establishments in Molino III. Task beat patrollers as bee workers to collect significant information from market vendors and sari-sari store owners near the hotspot for the next Preparatory Conference.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Investigations</span>
+      <p>16 theft cases remain Under Investigation in Molino III. Prioritize open cases involving Shoplifting modus — cross-reference across cases to detect series crime patterns. Recovery of stolen property is the primary case-closing mechanism.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Police Community Relations</span>
+      <p>Engage market association officers and sari-sari store owners near Molino III commercial area as Barangay Information Network (BIN) partners — recruit during the 8:00 AM – 9:00 AM foot patrol window. Address lighting gaps and unsecured display areas at commercial establishments consistent with the Shoplifting modus identified in data.</p>
+    </div>
+  </div>
+
+  <!-- MURDER -->
+  <div class="cd-ai-crime-block">
+    <h4>Murder</h4>
+
+    <div class="cd-ai-sparkline-wrap">
+      <div class="cd-ai-sparkline-header">
+        <span class="cd-ai-sparkline-title">Weekly Trend</span>
+        <span class="cd-ai-sparkline-badge badge-stable">→ Stable</span>
+        <span class="cd-ai-sparkline-forecast">Forecast: <strong>1</strong> next week · 54% confidence (SBA)</span>
+      </div>
+      <svg class="sparkline-svg" viewBox="0 0 600 60" preserveAspectRatio="none">
+        <polyline fill="none" stroke="#1e3a5f" stroke-width="1.5"
+          points="0,55 60,20 120,55 180,20 240,55 300,20 360,55 420,20 480,55 540,20"/>
+        <polyline fill="none" stroke="#6b7280" stroke-width="1" stroke-dasharray="4 3"
+          points="0,38 540,32"/>
+        <circle cx="570" cy="32" r="5" fill="#f59e0b"/>
+      </svg>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Crime Assessment</span>
+      <p>Murder recorded 18 incidents (CCE 72.2%, CSE 44.4%) — a relatively high solution rate compared to other index crimes. Trend is stable with a forecast of 1 incident next week at 54% confidence. Peak activity occurs between 11:00 PM – 1:00 AM on Saturdays, concentrated in December 2024. Any occurrence of murder warrants priority-one response regardless of trend direction. Approximately 58% of murder incidents occur in residential settings in San Nicolas III, suggesting interpersonal or domestic conflict as the primary environmental driver rather than commercial opportunity. The pattern is Dispersed — patrol deployment must maintain wide coverage in San Nicolas III during late night hours rather than concentrating on a single corridor.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Operations</span>
+      <p>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Situation:</strong> Murder is concentrated in residential areas of San Nicolas III during late night hours — mobile patrol with investigation support posture is required.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Mission:</strong> Deter further murder incidents in San Nicolas III and support active investigations during the 11:00 PM – 1:00 AM peak window.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Execution:</strong> Mobile patrol in San Nicolas III residential streets during late night shift. Maintain radio contact with TOC throughout deployment.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Must Do (1):</strong> At 10:30 PM – 11:30 PM, conduct mobile patrol sweep of residential blocks in San Nicolas III, focusing on known dispute-prone puroks.</span>
+        <span style="display:block;margin-bottom:5px"><strong style="color:#94a3b8">Must Do (2):</strong> At 12:00 AM – 1:00 AM, conduct warrant service check for persons of interest in San Nicolas III in coordination with Investigation Section.</span>
+        <span style="display:block"><strong style="color:#94a3b8">Coordinating Instructions:</strong> Coordinate with TOC for real-time communications. NBI coordination if modus data suggests organized crime involvement.</span>
+      </p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Intelligence</span>
+      <p>Murder warrants immediate intelligence effort regardless of trend. Identify whether cases in San Nicolas III share a modus or geographic cluster. Task intelligence personnel to map relationships between victims across the 4 open cases currently Under Investigation.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Investigations</span>
+      <p>4 murder cases remain Under Investigation — all are priority-one. CSE of 44.4% is above the threshold but the COP must be briefed on the remaining open cases. Coordinate with Regional Homicide Unit for the oldest open cases exceeding 90 days.</p>
+    </div>
+
+    <div class="cd-ai-quad-item">
+      <span class="cd-ai-quad-label">Police Community Relations</span>
+      <p>Engage barangay kagawads and purok leaders in San Nicolas III as Barangay Information Network (BIN) contacts — recruit during the 10:30 PM patrol window as witness conduits for active cases. Build visible command presence through consistent late-night patrol to reassure residents.</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  const RISK_DATA = [
+    { rank:1, brgy:"MOLINO III", score:87, crimes:["SCC","RAPE"], last:"Aug 25, 2025", recency:"recent", tier:"sba", why:"High frequency (28 incidents) + recent crime Aug 25 + interval overdue (avg 9 days, 7 days elapsed)", spark:[1,0,2,1,3,0,1,2,1,0,2,1,3,1,2,0,1,2,3,1] },
+    { rank:2, brgy:"SAN NICOLAS III", score:81, crimes:["MURDER"], last:"Jun 27, 2025", recency:"month", tier:"sba", why:"High frequency (21 incidents) + violent crime history + SBA interval estimate 14 days", spark:[0,1,0,2,0,1,0,1,0,2,0,1,0,1,0,1,0,2,0,1] },
+    { rank:3, brgy:"HABAY II", score:79, crimes:["RAPE","THEFT"], last:"Aug 30, 2025", recency:"recent", tier:"sba", why:"Very recent crime Aug 30 + consistent 12-day interval pattern, 1 day elapsed", spark:[1,0,1,2,0,1,1,0,2,1,0,1,0,2,1,0,1,2,1,0] },
+    { rank:4, brgy:"MOLINO IV", score:76, crimes:["THEFT","RAPE"], last:"Aug 5, 2025", recency:"week", tier:"sba", why:"Highest overall incident count (24) + SBA rate 0.31/week", spark:[2,1,3,2,1,2,3,1,2,1,3,2,1,2,1,2,3,2,1,2] },
+    { rank:5, brgy:"ZAPOTE III", score:71, crimes:["HOMICIDE","THEFT"], last:"Aug 26, 2025", recency:"recent", tier:"sba", why:"Recent homicide Aug 26 + historical theft pattern + interval 11 days, 6 days elapsed", spark:[0,1,0,1,2,0,1,0,2,0,1,0,1,0,2,0,1,0,1,0] },
+    { rank:6, brgy:"QUEENS ROW EAST", score:68, crimes:["RAPE","CARNAP"], last:"Aug 28, 2025", recency:"recent", tier:"freq", why:"Multiple crime types, recent activity Aug 28, frequency rank 6", spark:[0,0,1,0,1,0,0,1,0,0,1,0,1,0,0,1,0,1,0,0] },
+    { rank:7, brgy:"MOLINO II", score:65, crimes:["MURDER","THEFT"], last:"Aug 9, 2025", recency:"week", tier:"sba", why:"Murder history + regular 18-day SBA interval, 22 days elapsed — overdue signal", spark:[1,0,2,0,1,0,1,0,2,0,1,0,1,0,1,0,2,0,1,0] },
+    { rank:8, brgy:"HABAY I", score:61, crimes:["ROBBERY","THEFT"], last:"Jul 27, 2025", recency:"month", tier:"sba", why:"Consistent robbery pattern + SBA rate 0.22/week + frequency rank 5", spark:[1,0,1,0,2,1,0,1,0,1,2,0,1,0,1,0,1,0,2,0] },
+    { rank:9, brgy:"QUEENS ROW WEST", score:58, crimes:["CARNAP","THEFT"], last:"Aug 27, 2025", recency:"recent", tier:"freq", why:"Recent carnapping Aug 27 + frequency prior rank 8", spark:[0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0,1,0,0] },
+    { rank:10, brgy:"MAMBOG IV", score:54, crimes:["MURDER","THEFT"], last:"Aug 8, 2025", recency:"week", tier:"freq", why:"Murder history + recent activity + frequency rank 9", spark:[0,1,0,0,1,0,1,0,0,1,0,1,0,0,1,0,1,0,0,1] },
+    { rank:11, brgy:"TALABA II", score:49, crimes:["THEFT"], last:"Aug 5, 2025", recency:"week", tier:"sba", why:"Consistent theft pattern + SBA rate 0.18/week", spark:[1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1,0] },
+    { rank:12, brgy:"ZAPOTE I", score:45, crimes:["ROBBERY","THEFT"], last:"Jun 27, 2025", recency:"month", tier:"freq", why:"Historical violent trend + frequency rank 11", spark:[0,0,1,0,1,0,0,0,1,0,0,1,0,0,1,0,0,0,1,0] },
+    { rank:13, brgy:"MOLINO V", score:42, crimes:["MURDER"], last:"Aug 31, 2025", recency:"recent", tier:"sparse", why:"Very recent murder Aug 31 — recency spike overrides sparse history", spark:[0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,1] },
+    { rank:14, brgy:"P.F. ESPIRITU III", score:38, crimes:["THEFT","ROBBERY"], last:"Aug 14, 2025", recency:"week", tier:"freq", why:"Recurring pattern + frequency rank 13", spark:[0,1,0,0,1,0,0,1,0,0,1,0,0,0,1,0,0,1,0,0] },
+    { rank:15, brgy:"NIOG I", score:35, crimes:["THEFT"], last:"Mar 13, 2025", recency:"old", tier:"freq", why:"Historical frequency only — no recent signal, frequency rank 14", spark:[1,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,1,0,0,0] },
+  ];
+
+  const CRIME_PILL_CLASS = {
+    "MURDER":"pill-murder","THEFT":"pill-theft","RAPE":"pill-rape",
+    "ROBBERY":"pill-robbery","HOMICIDE":"pill-homicide",
+    "SCC":"pill-scc","CARNAP":"pill-theft","PI":"pill-pi"
+  };
+
+  const CRIME_LABELS = {
+    "MURDER":"Murder","THEFT":"Theft","RAPE":"Rape","ROBBERY":"Robbery",
+    "HOMICIDE":"Homicide","SCC":"Spec. Complex","CARNAP":"Carnapping","PI":"Phys. Inj."
+  };
+
+  const RECENCY_CLASS = {
+    "recent":"last-recent","week":"last-week","month":"last-month","old":"last-old"
+  };
+
+  const TIER_CLASS = { "sba":"tier-sba","freq":"tier-freq","sparse":"tier-sparse" };
+  const TIER_LABEL = { "sba":"SBA","freq":"FREQ","sparse":"SPARSE" };
+
+  function getScoreClass(s) {
+    if (s >= 80) return ["score-critical","fill-critical"];
+    if (s >= 65) return ["score-high","fill-high"];
+    if (s >= 45) return ["score-medium","fill-medium"];
+    return ["score-low","fill-low"];
+  }
+
+  function buildSparkBars(sparkData, isExpanded) {
+    const max = Math.max(...sparkData, 1);
+    const weeks = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec","Jan","Feb","Mar","Apr","May","Jun","Jul","Aug"];
+    return sparkData.map((v, i) => {
+      const h = Math.round((v / max) * 44) + 3;
+      const isForecast = i === sparkData.length - 1;
+      return `<div class="spark-bar${isForecast?' forecast':''}" style="height:${h}px" title="Week ${i+1}: ${v} incident${v!==1?'s':''}"></div>`;
+    }).join('');
+  }
+
+  let expandedRow = null;
+
+  function toggleRow(rank) {
+    const expandRow = document.getElementById(`expand-${rank}`);
+    const arrow = document.getElementById(`arrow-${rank}`);
+    if (expandedRow === rank) {
+      expandRow.classList.add('hidden');
+      arrow.textContent = '▾';
+      expandedRow = null;
+    } else {
+      if (expandedRow !== null) {
+        document.getElementById(`expand-${expandedRow}`).classList.add('hidden');
+        document.getElementById(`arrow-${expandedRow}`).textContent = '▾';
+      }
+      expandRow.classList.remove('hidden');
+      arrow.textContent = '▴';
+      expandedRow = rank;
+    }
+  }
+
+  function toggleBacktest() {
+    const panel = document.getElementById('backtest-panel');
+    panel.classList.toggle('hidden');
+  }
+
+  function renderTable() {
+    const tbody = document.getElementById('risk-tbody');
+    let html = '';
+
+    RISK_DATA.forEach(row => {
+      const [scoreCol, fillCol] = getScoreClass(row.score);
+      const pillsHtml = row.crimes.map(c =>
+        `<span class="crime-pill ${CRIME_PILL_CLASS[c]||'pill-theft'}">${CRIME_LABELS[c]||c}</span>`
+      ).join('');
+
+      const sparkBars = buildSparkBars(row.spark, false);
+      const avgInterval = Math.round(20 / (row.spark.filter(v=>v>0).length || 1));
+
+      html += `
+        <tr onclick="toggleRow(${row.rank})">
+          <td class="td-rank">${row.rank}</td>
+          <td class="td-brgy">${row.brgy}</td>
+          <td>
+            <div class="risk-score-wrap">
+              <span class="risk-score-num ${scoreCol}">${row.score}</span>
+              <div class="risk-bar-bg">
+                <div class="risk-bar-fill ${fillCol}" style="width:${row.score}%"></div>
+              </div>
+            </div>
+          </td>
+          <td><div class="crime-pills">${pillsHtml}</div></td>
+          <td class="td-last ${RECENCY_CLASS[row.recency]}">${row.last}</td>
+          <td><span class="tier-badge ${TIER_CLASS[row.tier]}">${TIER_LABEL[row.tier]}</span></td>
+          <td class="td-why">${row.why}</td>
+          <td><span class="expand-arrow" id="arrow-${row.rank}">▾</span></td>
+        </tr>
+        <tr id="expand-${row.rank}" class="sparkline-expand-row hidden">
+          <td colspan="8">
+            <div class="sparkline-expand-inner">
+              <div style="font-size:10px;color:#475569;text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">
+                ${row.brgy} — 20-week crime history (last bar = forecast)
+              </div>
+              <div class="mini-spark">${sparkBars}</div>
+              <div class="spark-labels">
+                <span>20 weeks ago</span>
+                <span>Today</span>
+                <span style="color:#f59e0b">Forecast</span>
+              </div>
+              <div class="spark-stat-row">
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Total incidents</span>
+                  <span class="spark-stat-val">${row.spark.slice(0,-1).reduce((a,b)=>a+b,0)}</span>
+                </div>
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Active weeks</span>
+                  <span class="spark-stat-val">${row.spark.slice(0,-1).filter(v=>v>0).length}</span>
+                </div>
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Avg interval</span>
+                  <span class="spark-stat-val">~${avgInterval} days</span>
+                </div>
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Forecast next week</span>
+                  <span class="spark-stat-val" style="color:#f59e0b">${row.spark[row.spark.length-1]}</span>
+                </div>
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Model tier</span>
+                  <span class="spark-stat-val"><span class="tier-badge ${TIER_CLASS[row.tier]}">${TIER_LABEL[row.tier]}</span></span>
+                </div>
+                <div class="spark-stat">
+                  <span class="spark-stat-label">Risk score</span>
+                  <span class="spark-stat-val ${getScoreClass(row.score)[0]}">${row.score}/100</span>
+                </div>
+              </div>
+            </div>
+          </td>
+        </tr>`;
+    });
+
+    tbody.innerHTML = html;
+  }
+
+  renderTable();
+</script>
+</body>
+</html>

@@ -1,0 +1,95 @@
+
+const multer = require("multer");
+const upload = multer({ storage: multer.memoryStorage() });
+
+const express = require("express");
+const router  = express.Router();
+const {
+  getMyPatrols,
+  getAfterPatrolReports,
+  getMyAfterPatrolReports,
+  getPatrolStats,
+  getActivePatrollers,
+  getAvailablePatrollers,
+  getAvailableMobileUnits,
+  getMobileUnits,
+  createMobileUnit,
+  submitAfterPatrolReport,
+  updateMobileUnit,
+deleteAfterPatrolReport,
+  deleteMobileUnit,
+  getPatrols,
+  createPatrol,
+  updatePatrol,
+  updatePatrollersForDate,
+  deletePatrol,
+  updateRouteNotes,
+  updateRouteTask,
+  addRouteTask,
+  removeRouteTask,
+  updateOfficerLocation,
+   uploadAfterPatrolPhotos,
+  deleteAfterPatrolPhoto,
+} = require("../controllers/patrolController");
+
+const { authenticate } = require("../../../shared/middleware/tokenMiddleware");
+
+const { exportPatrolList, exportPatrolDetail } = require("../controllers/ExportPatrolController");
+
+// Stats & listings
+router.get("/stats",               authenticate, getPatrolStats);
+router.get("/active",              authenticate, getActivePatrollers);
+router.get("/available-patrollers",authenticate, getAvailablePatrollers);
+router.get("/available-mobile-units", getAvailableMobileUnits);
+
+// Mobile units
+router.get   ("/mobile-units",     authenticate, getMobileUnits);
+router.post  ("/mobile-units",     authenticate, createMobileUnit);
+router.put   ("/mobile-units/:id", authenticate, updateMobileUnit);
+router.delete("/mobile-units/:id", authenticate, deleteMobileUnit);
+
+// Patrols
+router.get("/my-patrols", authenticate, getMyPatrols);
+router.get   ("/patrols",     authenticate, getPatrols);
+router.post  ("/patrols",     authenticate, createPatrol);
+router.put   ("/patrols/:id", authenticate, updatePatrol);
+router.delete("/patrols/:id", authenticate, deletePatrol);
+
+
+// ── Patrollers per date (new) ──────────────────────────────
+// PATCH /patrol/patrols/:id/patrollers/:date
+// Replace all patrollers for a specific patrol date
+router.patch("/patrols/:id/patrollers/:date", authenticate, updatePatrollersForDate);
+
+// Routes / tasks
+router.patch ("/routes/:routeId/notes", authenticate, updateRouteNotes);
+router.patch ("/routes/:routeId/task",  authenticate, updateRouteTask);
+router.post  ("/routes/add",            authenticate, addRouteTask);
+router.delete("/routes/:routeId",       authenticate, removeRouteTask);
+
+//
+router.post("/export/list",   authenticate, exportPatrolList);
+router.post("/export/detail", authenticate, exportPatrolDetail);
+
+//
+ router.post("/patrols/:id/after-report", authenticate, submitAfterPatrolReport);
+router.get( "/patrols/:id/after-reports", authenticate, getAfterPatrolReports);
+router.get( "/patrols/:id/after-reports/mine", authenticate, getMyAfterPatrolReports);
+router.delete("/after-reports/:reportId", authenticate, deleteAfterPatrolReport)
+
+//
+router.post("/location", authenticate, updateOfficerLocation);
+module.exports = router;
+
+//picture
+router.post(
+  "/after-reports/:reportId/photos",
+  authenticate,
+  upload.array("photos", 10),
+  uploadAfterPatrolPhotos
+);
+router.delete(
+  "/after-reports/:reportId/photos",
+  authenticate,
+  deleteAfterPatrolPhoto
+);
