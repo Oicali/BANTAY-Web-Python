@@ -21,10 +21,6 @@ from dotenv import load_dotenv
 load_dotenv()
 
 
-# ============================================================
-# ENV HELPERS
-# ============================================================
-
 def _get_env(name: str) -> str:
     value = os.getenv(name)
     if not value:
@@ -35,10 +31,6 @@ def _get_env(name: str) -> str:
 def _esc(value) -> str:
     return html_lib.escape(str(value or ""))
 
-
-# ============================================================
-# BREVO HTTP EMAIL HELPER
-# ============================================================
 
 def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
     """
@@ -85,10 +77,6 @@ def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
     return True
 
 
-# ============================================================
-# GENERATE USERNAME
-# ============================================================
-
 def _initial(value: str) -> str:
     value = (value or "").strip()
     return value[0].upper() if value else "X"
@@ -130,10 +118,6 @@ def generate_username(
     return f"{initials}{yy}{seq}_{safe_user_type}"
 
 
-# ============================================================
-# GENERATE PASSWORD
-# ============================================================
-
 def generate_password() -> str:
     upper   = string.ascii_uppercase
     lower   = string.ascii_lowercase
@@ -151,10 +135,6 @@ def generate_password() -> str:
     random.shuffle(chars)
     return "".join(chars)
 
-
-# ============================================================
-# SHARED EMAIL STYLES
-# ============================================================
 
 _BASE_STYLES = """
   body{
@@ -275,10 +255,6 @@ def _html_doc(head_styles: str, body: str) -> str:
 """
 
 
-# ============================================================
-# SEND VERIFICATION EMAIL
-# ============================================================
-
 def send_verification_email(
     email: str,
     first_name: str,
@@ -369,10 +345,6 @@ def send_verification_email(
         print(f"send_verification_email error: {exc}")
         return {"success": False, "message": "Failed to send verification email", "error": str(exc)}
 
-
-# ============================================================
-# SEND WELCOME EMAIL
-# ============================================================
 
 def send_welcome_email(
     email: str,
@@ -496,9 +468,6 @@ def send_welcome_email(
         return {"success": False, "message": "Failed to send welcome email", "error": str(exc)}
 
 
-# ============================================================
-# SEND OTP EMAIL
-# ============================================================
 
 def send_otp_email(email: str, otp: str, type_: str = "new") -> dict:
     is_current = type_ == "current"
@@ -559,10 +528,6 @@ def send_otp_email(email: str, otp: str, type_: str = "new") -> dict:
         return {"success": False, "message": "Failed to send verification email", "error": str(exc)}
 
 
-# ============================================================
-# SEND PASSWORD OTP EMAIL
-# ============================================================
-
 def send_password_otp_email(email: str, first_name: str, otp: str) -> dict:
     first_name = _esc(first_name or "User")
     otp        = _esc(otp)
@@ -612,10 +577,6 @@ def send_password_otp_email(email: str, first_name: str, otp: str) -> dict:
         return {"success": False, "message": "Failed to send OTP email", "error": str(exc)}
 
 
-# ============================================================
-# SEND PASSWORD CHANGED NOTIFICATION
-# ============================================================
-
 def send_password_changed_notification(email: str, first_name: str) -> dict:
     first_name = _esc(first_name or "User")
     now_ph     = datetime.now(ZoneInfo("Asia/Manila")).strftime("%B %d, %Y, %I:%M %p")
@@ -657,10 +618,6 @@ def send_password_changed_notification(email: str, first_name: str) -> dict:
         print(f"send_password_changed_notification error: {exc}")
         return {"success": False, "error": str(exc)}
 
-
-# ============================================================
-# SEND EMAIL CHANGED NOTIFICATION
-# ============================================================
 
 def send_email_changed_notification(old_email: str, new_email: str) -> dict:
     now_ph = datetime.now(ZoneInfo("Asia/Manila")).strftime("%B %d, %Y, %I:%M %p")

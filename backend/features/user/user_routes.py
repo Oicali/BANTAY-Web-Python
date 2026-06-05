@@ -1,5 +1,5 @@
 # ================================================================================
-# FILE: backend/features/user/user_router.py
+# FILE: backend/features/user/user_routes.py
 # ================================================================================
 
 from flask import Blueprint
@@ -23,11 +23,10 @@ from features.user.user_controller import (
 
 user_bp = Blueprint("user_management", __name__)
 
-# ── Public — no authentication required ──────────────────────────────────────
+
 # GET /verify-account?token=<raw_token>
 user_bp.route("/verify-account", methods=["GET"])(verify_account)
 
-# ── Protected — require authentication ────────────────────────────────────────
 # GET  /users?userType=police&status=active&search=...&role=...&page=1&limit=20
 user_bp.route("/users", methods=["GET"])(authenticate(get_all_users))
 

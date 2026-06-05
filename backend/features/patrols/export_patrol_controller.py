@@ -29,10 +29,6 @@ from reportlab.lib.utils import ImageReader
 
 from shared.utils.audit_logger import log_audit
 
-
-# ── Design tokens ──────────────────────────────────────────────────────────────
-# Mirror the JS constants exactly
-
 DARK  = colors.HexColor("#1E3A5F")
 LIGHT = colors.HexColor("#D9E4F0")
 WHITE = colors.white
@@ -43,12 +39,10 @@ AMBER = colors.HexColor("#B45309")
 MUTED = colors.HexColor("#9CA3AF")
 MED   = colors.HexColor("#6B7280")
 
-PAGE_W, PAGE_H = A4                        # 595.27 x 841.89 pt
+PAGE_W, PAGE_H = A4                        
 MARGIN         = 2 * cm
-CONTENT_W      = PAGE_W - 2 * MARGIN       # usable width
+CONTENT_W      = PAGE_W - 2 * MARGIN       
 
-
-# ── Paragraph styles ───────────────────────────────────────────────────────────
 
 def _style(name, **kw):
     defaults = dict(fontName="Helvetica", fontSize=9, leading=12,
@@ -69,7 +63,6 @@ S_HEADER_TEXT = _style("hdr",     fontSize=7, textColor=MUTED, alignment=TA_RIGH
 S_FOOTER_TEXT = _style("ftr",     fontSize=7, textColor=MUTED, alignment=TA_CENTER)
 
 
-# ── Date / time helpers ────────────────────────────────────────────────────────
 
 def _fmt_date(d) -> str:
     if d is None:
@@ -138,13 +131,11 @@ def _status_color(status: str):
     }.get(status, MED)
 
 
-# ── IP helper ──────────────────────────────────────────────────────────────────
 
 def _get_ip() -> str:
     return request.remote_addr or "unknown"
 
 
-# ── Table style builders ───────────────────────────────────────────────────────
 
 def _header_ts(col_count: int) -> list:
     """TableStyle commands for a header row."""
@@ -172,8 +163,6 @@ def _body_row_ts(row_count: int, alt_start: int = 1) -> list:
             cmds.append(("BACKGROUND", (0, i), (-1, i), WHITE))
     return cmds
 
-
-# ── Header / Footer callbacks ──────────────────────────────────────────────────
 
 def _make_header_footer(title: str, subtitle: str = ""):
     """Returns (onFirstPage, onLaterPages) functions for BaseDocTemplate."""
@@ -204,7 +193,6 @@ def _make_header_footer(title: str, subtitle: str = ""):
     return _draw, _draw
 
 
-# ── Section heading with underline rule ───────────────────────────────────────
 
 def _section_heading(text: str) -> list:
     return [
@@ -212,9 +200,6 @@ def _section_heading(text: str) -> list:
         HRFlowable(width=CONTENT_W, thickness=1, color=DARK, spaceAfter=6),
     ]
 
-
-# ── BUILD: Patrol list table ───────────────────────────────────────────────────
-# Columns: #  |  Patrol Name  |  Mobile Unit  |  Duration  |  Patrollers  |  Barangays
 
 def _patrol_list_table(patrols: list) -> list:
     if not patrols:
@@ -261,8 +246,6 @@ def _patrol_list_table(patrols: list) -> list:
     return [t]
 
 
-# ── EXPORT 1: Patrol List PDF ──────────────────────────────────────────────────
-
 def export_patrol_list():
     try:
         body    = request.get_json(silent=True) or {}
@@ -274,7 +257,6 @@ def export_patrol_list():
 
         now_str = _fmt_now()
 
-        # ── Build flowables ────────────────────────────────────────
         story = []
 
         # Cover
@@ -283,7 +265,6 @@ def export_patrol_list():
         story.append(HRFlowable(width=CONTENT_W, thickness=2, color=DARK,
                                 spaceBefore=8, spaceAfter=16))
 
-        # Summary stats table
         story += _section_heading("Summary")
 
         stat_w = [CONTENT_W * 0.65, CONTENT_W * 0.35]
@@ -314,7 +295,6 @@ def export_patrol_list():
         story.append(stat_t)
         story.append(Spacer(1, 12))
 
-        # Sections
         for label, subset in [
             (f"Active Patrols  ({len(active)})",    active),
             (f"Upcoming Patrols  ({len(upcoming)})", upcoming),
@@ -324,7 +304,6 @@ def export_patrol_list():
             story += _patrol_list_table(subset)
             story.append(Spacer(1, 12))
 
-        # ── Render to PDF ──────────────────────────────────────────
         buf       = io.BytesIO()
         on_page, _ = _make_header_footer("PATROL SCHEDULING REPORT")
 
@@ -374,8 +353,6 @@ def export_patrol_list():
         return jsonify({"success": False, "message": str(e)}), 500
 
 
-# ── BUILD: Patrollers table ────────────────────────────────────────────────────
-
 def _patrollers_table(patrollers: list) -> list:
     if not patrollers:
         return [Paragraph("No patrollers assigned.", S_BODY)]
@@ -419,8 +396,6 @@ def _patrollers_table(patrollers: list) -> list:
     return [t]
 
 
-# ── BUILD: Timetable table (one shift) ────────────────────────────────────────
-
 def _timetable_table(tasks: list) -> list:
     if not tasks:
         return [Paragraph("No tasks scheduled.", S_BODY)]
@@ -449,9 +424,6 @@ def _timetable_table(tasks: list) -> list:
     t.setStyle(TableStyle(ts))
     return [t]
 
-
-# ── EXPORT 2: Patrol Detail PDF ────────────────────────────────────────────────
-
 def export_patrol_detail():
     try:
         body      = request.get_json(silent=True) or {}
@@ -474,7 +446,6 @@ def export_patrol_detail():
         date_range = _date_range(patrol["start_date"][:10], patrol["end_date"][:10])
         now_str    = _fmt_now()
 
-        # ── Build flowables ────────────────────────────────────────
         story = []
 
         # Cover
@@ -486,7 +457,6 @@ def export_patrol_detail():
         story.append(HRFlowable(width=CONTENT_W, thickness=2, color=DARK,
                                 spaceBefore=8, spaceAfter=16))
 
-        # ── 1. Patrol info block ───────────────────────────────────
         story += _section_heading("1. Patrol Information")
 
         info_col_w = [CONTENT_W * 0.27, CONTENT_W * 0.73]
@@ -511,7 +481,7 @@ def export_patrol_detail():
             ("FONTNAME",     (1, 0), (1, 0),   "Helvetica-Bold"),     # patrol name bold
             ("TEXTCOLOR",    (1, 2), (1, 2),   status_color),         # status colour
         ]
-        # Alternate row shading (rows 0..5)
+
         for i in range(len(info_rows)):
             if i % 2 == 1:
                 info_cmds.append(("BACKGROUND", (0, i), (-1, i), GRAY))
@@ -521,7 +491,6 @@ def export_patrol_detail():
         story.append(info_t)
         story.append(Spacer(1, 12))
 
-        # ── 2. Area of Responsibility map ─────────────────────────
         story += _section_heading("2. Area of Responsibility")
 
         if map_image:
@@ -529,7 +498,6 @@ def export_patrol_detail():
             b64 = map_image.split(",", 1)[-1] if "," in map_image else map_image
             img_bytes  = base64.b64decode(b64)
             img_reader = ImageReader(io.BytesIO(img_bytes))
-            # ~17 cm wide × ~10 cm tall — matches JS EMU values
             img = Image(io.BytesIO(img_bytes), width=17 * cm, height=10 * cm)
             img.hAlign = "LEFT"
             story.append(img)
@@ -542,10 +510,8 @@ def export_patrol_detail():
         ))
         story.append(Spacer(1, 12))
 
-        # ── 3. Assigned Patrollers ─────────────────────────────────
         story += _section_heading("3. Assigned Patrollers")
 
-        # Deduplicate (same logic as JS)
         seen, unique_patrollers = set(), []
         for p in (patrol.get("patrollers") or []):
             key = (p.get("active_patroller_id"), p.get("shift"))
@@ -556,7 +522,6 @@ def export_patrol_detail():
         story += _patrollers_table(unique_patrollers)
         story.append(Spacer(1, 12))
 
-        # ── 4. Timetable per date × shift ─────────────────────────
         story += _section_heading("4. Patrol Timetable")
 
         timetable_added = False
@@ -596,7 +561,6 @@ def export_patrol_detail():
 
         story.append(Spacer(1, 12))
 
-        # ── Render to PDF ──────────────────────────────────────────
         buf        = io.BytesIO()
         on_page, _ = _make_header_footer("PATROL DETAIL REPORT", patrol["patrol_name"])
 

@@ -13,15 +13,11 @@ class User:
         """
         self.pool = pool
 
-    # ── internal helpers ──────────────────────────────────────────────────────
-
     def _conn(self):
         """Get a connection from the pool."""
         return self.pool.get_connection()
 
-    # =====================================================
-    # GET CURRENT USER PROFILE
-    # =====================================================
+
     def get_profile(self, user_id: int) -> Optional[dict]:
         conn = self._conn()
         try:
@@ -61,9 +57,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # CHECK PHONE AVAILABILITY
-    # =====================================================
     def check_phone_availability(
         self, phone: str, exclude_user_id: Optional[int] = None
     ) -> bool:
@@ -112,9 +105,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # UPDATE USER PROFILE
-    # =====================================================
     def update_profile(self, user_id: int, profile_data: dict) -> Optional[dict]:
         first_name        = profile_data.get("first_name")
         last_name         = profile_data.get("last_name")
@@ -202,9 +192,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # GET USER BY ID (with password)
-    # =====================================================
     def get_user_by_id(self, user_id: int) -> Optional[dict]:
         conn = self._conn()
         try:
@@ -226,9 +213,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # UPDATE PASSWORD
-    # =====================================================
     def update_password(self, user_id: int, hashed_password: str) -> bool:
         conn = self._conn()
         try:
@@ -254,9 +238,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # FIND USER BY USERNAME OR EMAIL
-    # =====================================================
     def find_by_username_or_email(self, username_or_email: str) -> Optional[dict]:
         conn = self._conn()
         try:
@@ -274,9 +255,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # GET ALL USERS
-    # =====================================================
     def get_all_users(self) -> list[dict]:
         conn = self._conn()
         try:
@@ -311,9 +289,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # GET USER DETAILS BY ID
-    # =====================================================
     def get_user_details_by_id(self, user_id: int) -> Optional[dict]:
         conn = self._conn()
         try:
@@ -349,9 +324,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # UPDATE PROFILE PICTURE
-    # =====================================================
     def update_profile_picture(self, user_id: int, profile_picture: str) -> bool:
         conn = self._conn()
         try:
@@ -370,9 +342,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # SET email_changed_at
-    # =====================================================
     def update_email_changed_at(self, user_id: int) -> bool:
         conn = self._conn()
         try:
@@ -391,9 +360,6 @@ class User:
         finally:
             conn.close()
 
-    # =====================================================
-    # SET password_changed_at
-    # =====================================================
     def update_password_changed_at(self, user_id: int) -> bool:
         conn = self._conn()
         try:

@@ -23,8 +23,6 @@ def get_client_ip() -> str:
     return request.remote_addr or "unknown"
 
 
-# ── GET all modus ─────────────────────────────────────────────────────────────
-
 def get_all_modus():
     try:
         sort_by = request.args.get("sort_by", "")
@@ -48,9 +46,6 @@ def get_all_modus():
         print(f"get_all_modus error: {e}")
         return jsonify({"success": False, "message": "Failed to fetch modus list"}), 500
 
-
-# ── GET one modus ─────────────────────────────────────────────────────────────
-
 def get_modus_by_id(id):
     try:
         db = get_db()
@@ -71,8 +66,6 @@ def get_modus_by_id(id):
         print(f"get_modus_by_id error: {e}")
         return jsonify({"success": False, "message": "Failed to fetch modus"}), 500
 
-
-# ── POST create ───────────────────────────────────────────────────────────────
 
 def create_modus():
     current_user = g.user
@@ -130,8 +123,6 @@ def create_modus():
         print(f"create_modus error: {e}")
         return jsonify({"success": False, "message": "Failed to create modus"}), 500
 
-
-# ── PATCH update ──────────────────────────────────────────────────────────────
 
 def update_modus(id):
     current_user = g.user

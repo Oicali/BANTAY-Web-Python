@@ -8,9 +8,6 @@ from typing import Optional
 
 class ProfileValidator:
 
-    # =====================================================
-    # VALIDATE NAME FIELDS
-    # =====================================================
     @staticmethod
     def validate_name(
         name: Optional[str],
@@ -31,9 +28,7 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE SUFFIX
-    # =====================================================
+
     @staticmethod
     def validate_suffix(suffix: Optional[str]) -> Optional[str]:
         if not suffix or suffix.strip() == "":
@@ -47,9 +42,7 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE PHONE NUMBER (with +63 prefix)
-    # =====================================================
+
     @staticmethod
     def validate_phone(
         phone: Optional[str],
@@ -76,9 +69,6 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE GENDER
-    # =====================================================
     @staticmethod
     def validate_gender(gender: Optional[str]) -> Optional[str]:
         if not gender:
@@ -89,9 +79,7 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE ADDRESS LINE (optional free text)
-    # =====================================================
+
     @staticmethod
     def validate_address_line(address_line: Optional[str]) -> Optional[str]:
         if not address_line or address_line.strip() == "":
@@ -102,9 +90,6 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE PSGC CODE (optional structured field)
-    # =====================================================
     @staticmethod
     def validate_psgc_code(code: Optional[str], field_name: str) -> Optional[str]:
         if not code or code.strip() == "":
@@ -118,9 +103,7 @@ class ProfileValidator:
 
         return None
 
-    # =====================================================
-    # VALIDATE PASSWORD
-    # =====================================================
+
     @staticmethod
     def validate_password(password: Optional[str]) -> list[str]:
         errors = []
@@ -146,9 +129,7 @@ class ProfileValidator:
 
         return errors
 
-    # =====================================================
-    # VALIDATE PROFILE UPDATE DATA
-    # =====================================================
+
     @classmethod
     def validate_profile_update(cls, data: dict) -> dict:
         errors = {}
@@ -211,9 +192,6 @@ class ProfileValidator:
 
         return {"is_valid": len(errors) == 0, "errors": errors}
 
-    # =====================================================
-    # VALIDATE PASSWORD CHANGE DATA
-    # =====================================================
     @classmethod
     def validate_password_change(cls, data: dict) -> dict:
         errors = {}

@@ -12,8 +12,6 @@ from shared.utils.audit_logger import log_audit
 from shared.utils.geo_utils import get_barangay_or_city_optimized
 
 
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
 def get_client_ip() -> str:
     return request.remote_addr or "unknown"
 
@@ -73,7 +71,6 @@ def fmt_date_display(d) -> str:
     return f"{d.strftime('%b')} {d.day}, {d.year}"
 
 
-# ── Local photo storage ───────────────────────────────────────────────────────
 
 _PATROL_UPLOAD_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
@@ -129,9 +126,6 @@ def _serialize_row(r: dict) -> dict:
             r[k] = str(v)
     return r
 
-
-# ── GET /patrol/stats ─────────────────────────────────────────────────────────
-
 def get_patrol_stats():
     try:
         db     = get_db()
@@ -174,8 +168,6 @@ def get_patrol_stats():
     except Exception as e:
         print(f"get_patrol_stats error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
-
-# ── GET /patrol/active ────────────────────────────────────────────────────────
 
 def get_active_patrollers():
     try:
@@ -244,8 +236,6 @@ def get_active_patrollers():
         print(f"get_active_patrollers error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-# ── GET /patrol/available-patrollers ─────────────────────────────────────────
-
 def get_available_patrollers():
     try:
         start             = request.args.get("start")
@@ -294,8 +284,6 @@ def get_available_patrollers():
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── GET /patrol/available-mobile-units ───────────────────────────────────────
-
 def get_available_mobile_units():
     try:
         start             = request.args.get("start")
@@ -335,8 +323,6 @@ def get_available_mobile_units():
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── GET /patrol/mobile-units ──────────────────────────────────────────────────
-
 def get_mobile_units():
     try:
         db     = get_db()
@@ -355,8 +341,6 @@ def get_mobile_units():
         print(f"get_mobile_units error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── POST /patrol/mobile-units ─────────────────────────────────────────────────
 
 def create_mobile_unit():
     try:
@@ -395,8 +379,6 @@ def create_mobile_unit():
         print(f"create_mobile_unit error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── PUT /patrol/mobile-units/<id> ─────────────────────────────────────────────
 
 def update_mobile_unit(id):
     try:
@@ -437,8 +419,6 @@ def update_mobile_unit(id):
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── DELETE /patrol/mobile-units/<id> ─────────────────────────────────────────
-
 def delete_mobile_unit(id):
     try:
         db     = get_db()
@@ -462,8 +442,6 @@ def delete_mobile_unit(id):
         print(f"delete_mobile_unit error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── Shared patrol helpers ─────────────────────────────────────────────────────
 
 def _fetch_patrol_rows(cursor, where_clause: str, params: list) -> list:
     cursor.execute(
@@ -567,8 +545,6 @@ def _enrich_patrols(cursor, patrols: list) -> list:
     return result
 
 
-# ── GET /patrol/patrols ───────────────────────────────────────────────────────
-
 def get_patrols():
     try:
         db     = get_db()
@@ -581,8 +557,6 @@ def get_patrols():
         print(f"get_patrols error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── GET /patrol/my-patrols ────────────────────────────────────────────────────
 
 def get_my_patrols():
     user_id = g.user.get("user_id")
@@ -605,8 +579,6 @@ def get_my_patrols():
         print(f"get_my_patrols error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── POST /patrol/patrols ──────────────────────────────────────────────────────
 
 def create_patrol():
     body             = request.get_json(silent=True) or {}
@@ -717,8 +689,6 @@ def create_patrol():
         return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 
 
-# ── PUT /patrol/patrols/<id> ──────────────────────────────────────────────────
-
 def update_patrol(id):
     body           = request.get_json(silent=True) or {}
     patrol_name    = (body.get("patrol_name")    or "").strip()
@@ -795,9 +765,6 @@ def update_patrol(id):
         print(f"update_patrol error: {e}")
         return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 
-
-# ── PATCH /patrol/patrols/<id>/patrollers/<date> ──────────────────────────────
-
 def update_patrollers_for_date(id, date):
     body             = request.get_json(silent=True) or {}
     patroller_ids_am = body.get("patroller_ids_am") or []
@@ -839,9 +806,6 @@ def update_patrollers_for_date(id, date):
         print(f"update_patrollers_for_date error: {e}")
         return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 
-
-# ── DELETE /patrol/patrols/<id> ───────────────────────────────────────────────
-
 def delete_patrol(id):
     try:
         db     = get_db()
@@ -866,8 +830,6 @@ def delete_patrol(id):
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── PATCH /patrol/routes/<route_id>/notes ─────────────────────────────────────
-
 def update_route_notes(route_id):
     try:
         body   = request.get_json(silent=True) or {}
@@ -884,8 +846,6 @@ def update_route_notes(route_id):
         print(f"update_route_notes error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── PATCH /patrol/routes/<route_id>/task ──────────────────────────────────────
 
 def update_route_task(route_id):
     try:
@@ -904,7 +864,6 @@ def update_route_task(route_id):
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── POST /patrol/routes/add ───────────────────────────────────────────────────
 
 def add_route_task():
     try:
@@ -930,7 +889,6 @@ def add_route_task():
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── DELETE /patrol/routes/<route_id> ─────────────────────────────────────────
 
 def remove_route_task(route_id):
     try:
@@ -944,8 +902,6 @@ def remove_route_task(route_id):
         print(f"remove_route_task error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── POST /patrol/patrols/<id>/after-report ────────────────────────────────────
 
 def submit_after_patrol_report(id):
     patrol_id = id
@@ -1092,8 +1048,6 @@ def submit_after_patrol_report(id):
         return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 
 
-# ── GET /patrol/patrols/<id>/after-reports ────────────────────────────────────
-
 def get_after_patrol_reports(id):
     try:
         db     = get_db()
@@ -1130,8 +1084,6 @@ def get_after_patrol_reports(id):
         print(f"get_after_patrol_reports error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── GET /patrol/patrols/<id>/after-reports/mine ───────────────────────────────
 
 def get_my_after_patrol_reports(id):
     user_id = g.user.get("user_id")
@@ -1178,8 +1130,6 @@ def get_my_after_patrol_reports(id):
         print(f"get_my_after_patrol_reports error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── DELETE /patrol/after-reports/<report_id> ─────────────────────────────────
 
 def delete_after_patrol_report(report_id):
     user_id   = g.user.get("user_id")
@@ -1230,8 +1180,6 @@ def delete_after_patrol_report(report_id):
         return jsonify({"success": False, "message": "Server error"}), 500
 
 
-# ── POST /patrol/location ─────────────────────────────────────────────────────
-
 def update_officer_location():
     user_id = g.user.get("user_id")
     if not user_id:
@@ -1262,8 +1210,6 @@ def update_officer_location():
         print(f"update_officer_location error: {e}")
         return jsonify({"success": False, "message": "Server error"}), 500
 
-
-# ── POST /patrol/after-reports/<report_id>/photos ────────────────────────────
 
 def upload_after_patrol_photos(report_id):
     user_id = g.user.get("user_id")
@@ -1318,8 +1264,6 @@ def upload_after_patrol_photos(report_id):
         print(f"upload_after_patrol_photos error: {e}")
         return jsonify({"success": False, "message": f"Server error: {e}"}), 500
 
-
-# ── DELETE /patrol/after-reports/<report_id>/photos ──────────────────────────
 
 def delete_after_patrol_photo(report_id):
     user_id = g.user.get("user_id")

@@ -8,7 +8,6 @@ import re
 from typing import Optional
 
 
-# ── Regex patterns ────────────────────────────────────────────────────────────
 _EMAIL_RE = re.compile(r"^[^\s@]+@[^\s@]+\.[^\s@]+$")
 _PHONE_RE = re.compile(r"^\+639\d{9}$")
 
@@ -21,7 +20,7 @@ def _fetchrow(cursor, sql: str, params: tuple):
 
 class UserValidator:
 
-    # ── Email format ──────────────────────────────────────────────────────────
+
     @staticmethod
     def validate_email(email: Optional[str], required: bool = True) -> Optional[str]:
         if not email or not email.strip():
@@ -30,7 +29,6 @@ class UserValidator:
             return "Invalid email format"
         return None
 
-    # ── Phone format (Philippine mobile: +639XXXXXXXXX) ──────────────────────
     @staticmethod
     def validate_phone(
         phone: Optional[str],
@@ -46,7 +44,7 @@ class UserValidator:
             )
         return None
 
-    # ── User type ─────────────────────────────────────────────────────────────
+
     @staticmethod
     def validate_user_type(user_type: Optional[str]) -> Optional[str]:
         if not user_type:
@@ -55,7 +53,7 @@ class UserValidator:
             return "Invalid user type. Must be 'police' or 'barangay'"
         return None
 
-    # ── Required fields for registration ─────────────────────────────────────
+  
     @staticmethod
     def validate_required_fields(data: dict) -> Optional[str]:
         base_required = [
@@ -82,7 +80,7 @@ class UserValidator:
             return f"Missing required fields: {', '.join(missing)}"
         return None
 
-    # ── Phone / alternate-phone difference ───────────────────────────────────
+  
     @staticmethod
     def validate_phone_difference(
         phone: Optional[str],
@@ -92,7 +90,7 @@ class UserValidator:
             return "Phone and alternate phone cannot be the same"
         return None
 
-    # ── Phone uniqueness (DB) ─────────────────────────────────────────────────
+
     @staticmethod
     def validate_phone_uniqueness(
         phone: Optional[str],
@@ -116,7 +114,6 @@ class UserValidator:
             )
         return "Phone number already registered" if row else None
 
-    # ── Alternate phone uniqueness (DB) ───────────────────────────────────────
     @staticmethod
     def validate_alternate_phone_uniqueness(
         alternate_phone: Optional[str],
@@ -140,7 +137,6 @@ class UserValidator:
             )
         return "Alternate phone number already registered" if row else None
 
-    # ── Email uniqueness (DB) ─────────────────────────────────────────────────
     @staticmethod
     def validate_email_uniqueness(
         email: Optional[str],
@@ -164,7 +160,6 @@ class UserValidator:
             )
         return "Email already registered" if row else None
 
-    # ── Role (DB) ─────────────────────────────────────────────────────────────
     @staticmethod
     def validate_role(
         role: Optional[str],
@@ -182,7 +177,7 @@ class UserValidator:
             return f"Invalid role '{role}' for {user_type} user."
         return None
 
-    # ── Full registration validation ──────────────────────────────────────────
+
     @classmethod
     def validate_registration(cls, data: dict, cursor) -> dict:
         errors: dict[str, str] = {}
@@ -243,7 +238,7 @@ class UserValidator:
 
         return {"isValid": len(errors) == 0, "is_valid": len(errors) == 0, "errors": errors}
 
-    # ── Update validation ─────────────────────────────────────────────────────
+  
     @classmethod
     def validate_update(cls, data: dict, existing_user: dict, cursor) -> dict:
         errors: dict[str, str] = {}

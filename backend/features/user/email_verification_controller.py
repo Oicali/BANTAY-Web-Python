@@ -18,14 +18,10 @@ from flask import Blueprint, request, jsonify, abort, g
 from config.database import get_db
 from features.user.email_service import send_otp_email, send_email_changed_notification
 
-# ---------------------------------------------------------------------------
-# Blueprint
-# ---------------------------------------------------------------------------
+
 bp = Blueprint("email_verification", __name__, url_prefix="/users/email")
 
-# ---------------------------------------------------------------------------
-# Constants  (mirror original values exactly)
-# ---------------------------------------------------------------------------
+
 OTP_EXPIRY_MS     = 2  * 60 * 1_000
 EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1_000
 RESEND_WAIT_MS    = 60 * 1_000
@@ -42,9 +38,6 @@ def _now() -> int:
     return int(time.time() * 1_000)
 
 
-# ---------------------------------------------------------------------------
-# In-memory stores
-# ---------------------------------------------------------------------------
 _sessions: dict[str, dict] = {}
 _persistent_locks: dict[str, dict] = {}
 
@@ -141,9 +134,6 @@ def _mask_email(email: str) -> str:
     return local[0] + "*" * (len(local) - 3) + local[-2:] + domain
 
 
-# ---------------------------------------------------------------------------
-# DB helpers  (mysql-connector-python)
-# ---------------------------------------------------------------------------
 def _get_user_by_id(user_id: str, db) -> Optional[dict]:
     cursor = db.cursor(dictionary=True)
     cursor.execute(
@@ -182,11 +172,6 @@ def _get_email_by_user_id(user_id: str, db) -> Optional[str]:
     cursor.close()
     return row["email"] if row else None
 
-
-# ---------------------------------------------------------------------------
-# STATUS CHECK
-# GET /users/email/status
-# ---------------------------------------------------------------------------
 @bp.get("/status")
 def get_email_status():
     user_id = str(g.user["user_id"])
@@ -222,10 +207,6 @@ def get_email_status():
     return jsonify({"blocked": False})
 
 
-# ---------------------------------------------------------------------------
-# FORCE LOCK
-# POST /users/email/force-lock
-# ---------------------------------------------------------------------------
 @bp.post("/force-lock")
 def force_lock():
     user_id = str(g.user["user_id"])
@@ -246,11 +227,6 @@ def force_lock():
 
     return jsonify({"success": True})
 
-
-# ---------------------------------------------------------------------------
-# STEP 1 — Verify current password
-# POST /users/email/verify-password
-# ---------------------------------------------------------------------------
 @bp.post("/verify-password")
 def verify_password():
     user_id  = str(g.user["user_id"])
@@ -319,10 +295,6 @@ def verify_password():
     return jsonify({"success": True})
 
 
-# ---------------------------------------------------------------------------
-# STEP 2 — Send OTP to current email
-# POST /users/email/request-old-otp
-# ---------------------------------------------------------------------------
 @bp.post("/request-old-otp")
 def request_old_otp():
     user_id = str(g.user["user_id"])
@@ -399,10 +371,6 @@ def request_old_otp():
     })
 
 
-# ---------------------------------------------------------------------------
-# STEP 3 — Verify OTP from current email
-# POST /users/email/verify-old-otp
-# ---------------------------------------------------------------------------
 @bp.post("/verify-old-otp")
 def verify_old_otp():
     user_id   = str(g.user["user_id"])
@@ -462,10 +430,6 @@ def verify_old_otp():
     return jsonify({"success": True})
 
 
-# ---------------------------------------------------------------------------
-# STEP 4 — Send OTP to new email
-# POST /users/email/request-new-otp
-# ---------------------------------------------------------------------------
 @bp.post("/request-new-otp")
 def request_new_otp():
     user_id   = str(g.user["user_id"])
@@ -571,11 +535,6 @@ def request_new_otp():
         "otpExpiresAt": session["newOtpExpires"],
     })
 
-
-# ---------------------------------------------------------------------------
-# STEP 5 — Verify OTP from new email
-# POST /users/email/verify-new-otp
-# ---------------------------------------------------------------------------
 @bp.post("/verify-new-otp")
 def verify_new_otp():
     user_id   = str(g.user["user_id"])
@@ -636,9 +595,6 @@ def verify_new_otp():
     return jsonify({"success": True, "verifiedEmail": verified_email})
 
 
-# ---------------------------------------------------------------------------
-# Utility functions called externally (e.g. from a profile controller)
-# ---------------------------------------------------------------------------
 def consume_session(user_id: str) -> None:
     """
     Call after a successful email save in your profile controller.

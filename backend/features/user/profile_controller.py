@@ -26,7 +26,6 @@ from features.user.email_service import (
 from shared.utils.audit_logger import log_audit
 
 
-# ── Password-change OTP constants ─────────────────────────────────────────────
 PW_OTP_EXPIRY           = 2  * 60 * 1000
 PW_MAX_OTP_ATTEMPTS     = 3
 PW_MAX_RESENDS          = 3
@@ -38,7 +37,6 @@ PW_MAX_CURRENT_ATTEMPTS = 5
 PW_CURRENT_LOCKOUT_MS   = 15 * 60 * 1000
 
 
-# ── In-memory stores ──────────────────────────────────────────────────────────
 pw_otp_store:             dict[str, dict] = {}
 pw_current_attempt_store: dict[str, dict] = {}
 pw_persistent_locks:      dict[str, dict] = {}
@@ -48,8 +46,6 @@ def now_ms() -> int:
     from datetime import datetime, timezone
     return int(datetime.now(timezone.utc).timestamp() * 1000)
 
-
-# ── Lock helpers ──────────────────────────────────────────────────────────────
 
 def get_pw_persistent_locks(user_id: str) -> dict:
     if user_id not in pw_persistent_locks:
@@ -109,8 +105,6 @@ def reset_pw_otp(session: dict) -> None:
     session["attempts"]        = 0
 
 
-# ── Local upload helper ───────────────────────────────────────────────────────
-
 _UPLOAD_DIR = os.path.join(
     os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
     "uploads",
@@ -141,8 +135,6 @@ def _save_profile_picture(file, user_id: str) -> str:
     file.save(destination)
     return f"/uploads/profiles/{filename}"
 
-
-# ── DB-backed change count (mysql-connector-python) ───────────────────────────
 
 def get_db_change_count(user_id) -> dict:
     try:
@@ -207,8 +199,6 @@ def increment_db_change_count(user_id) -> None:
         print(f"increment_db_change_count error: {e}")
 
 
-# ── Shared helpers ────────────────────────────────────────────────────────────
-
 def get_client_ip() -> str:
     return request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
 
@@ -217,8 +207,6 @@ def _user_repo() -> UserModel:
     return UserModel(get_pool())
 
 
-# ── Response helpers ──────────────────────────────────────────────────────────
-
 def _err(status: int, **kwargs):
     return jsonify({"success": False, **kwargs}), status
 
@@ -226,8 +214,6 @@ def _err(status: int, **kwargs):
 def _ok(**kwargs):
     return jsonify({"success": True, **kwargs})
 
-
-# ── DB row helper (mysql-connector-python) ────────────────────────────────────
 
 def _fetchrow(sql: str, params: tuple) -> Optional[dict]:
     """Run a SELECT and return the first row as a dict, or None."""
@@ -238,10 +224,6 @@ def _fetchrow(sql: str, params: tuple) -> Optional[dict]:
     cursor.close()
     return dict(row) if row else None
 
-
-# =============================================================================
-# HANDLERS
-# =============================================================================
 
 def get_profile():
     user_id = g.user["user_id"]
@@ -258,8 +240,6 @@ def get_profile():
         print(f"get_profile error: {e}")
         return _err(500, message="Failed to fetch profile")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 def check_phone_availability():
     current_user = g.user
@@ -282,8 +262,6 @@ def check_phone_availability():
         return _err(500, message="Error checking phone availability")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-
 def upload_profile_picture():
     current_user = g.user
 
@@ -305,8 +283,6 @@ def upload_profile_picture():
         print(f"upload_profile_picture error: {e}")
         return _err(500, message="Failed to upload profile picture")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 def update_profile(id):
     current_user = g.user
@@ -383,8 +359,6 @@ def update_profile(id):
         return _err(500, message="Failed to update profile")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-
 def upload_profile_picture_for_user(user_id):
     current_user = g.user
 
@@ -417,10 +391,6 @@ def upload_profile_picture_for_user(user_id):
         print(f"upload_profile_picture_for_user error: {e}")
         return _err(500, message="Failed to upload profile picture")
 
-
-# =============================================================================
-# PASSWORD CHANGE WITH OTP
-# =============================================================================
 
 def get_password_status():
     user_id = str(g.user["user_id"])
@@ -458,8 +428,6 @@ def get_password_status():
         return jsonify({"blocked": False})
 
 
-# ─────────────────────────────────────────────────────────────────────────────
-
 def force_password_lock():
     user_id = str(g.user["user_id"])
 
@@ -477,8 +445,6 @@ def force_password_lock():
         print(f"force_password_lock error: {e}")
         return _err(500)
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 def verify_current_password():
     user_id = str(g.user["user_id"])
@@ -555,8 +521,6 @@ def verify_current_password():
         print(f"verify_current_password error: {e}")
         return _err(500, message="Server error. Please try again.")
 
-
-# ─────────────────────────────────────────────────────────────────────────────
 
 def request_password_otp():
     current_user = g.user
@@ -690,7 +654,6 @@ def request_password_otp():
         return _err(500, message="Server error. Please try again.")
 
 
-# ─────────────────────────────────────────────────────────────────────────────
 
 def change_password_with_otp():
     current_user = g.user

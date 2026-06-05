@@ -23,10 +23,6 @@ from features.user.email_service import (
 )
 
 
-# ---------------------------------------------------------------------------
-# DB helpers (synchronous, mysql-connector-python style)
-# ---------------------------------------------------------------------------
-
 def get_pool():
     if db.pool is None:
         raise RuntimeError("Database pool is not initialized")
@@ -61,9 +57,6 @@ def db_execute(sql: str, params: tuple = ()):
     return affected
 
 
-# ---------------------------------------------------------------------------
-# Service helpers
-# ---------------------------------------------------------------------------
 
 def generate_password() -> str:
     alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%?"
@@ -95,10 +88,6 @@ def notify_all_by_role(roles: list, payload: dict, exclude_id=None) -> None:
     return None
 
 
-# ---------------------------------------------------------------------------
-# Response helpers
-# ---------------------------------------------------------------------------
-
 def error_response(status: int, message: str, **extra):
     body = {"success": False, "message": message, **extra}
     return jsonify(body), status
@@ -112,11 +101,6 @@ def _get_client_ip() -> str:
     return request.headers.get("X-Forwarded-For", request.remote_addr or "unknown").split(",")[0].strip()
 
 
-# =============================================================================
-# ENDPOINTS
-# =============================================================================
-
-# ── GET /user-management/users ───────────────────────────────────────────────
 def get_all_users():
     try:
         user_type     = request.args.get("userType") or request.args.get("user_type") or "police"
@@ -211,7 +195,6 @@ def get_all_users():
         return error_response(500, "Failed to fetch users")
 
 
-# ── GET /user-management/filter-options ──────────────────────────────────────
 def get_filter_options():
     try:
         police_roles   = db_fetch(
@@ -230,7 +213,6 @@ def get_filter_options():
         return error_response(500, "Failed to fetch filter options")
 
 
-# ── GET /user-management/users/<id> ──────────────────────────────────────────
 def get_user_by_id(id):
     try:
         row = db_fetchrow(
@@ -263,7 +245,6 @@ def get_user_by_id(id):
         return error_response(500, "Failed to fetch user")
 
 
-# ── POST /user-management/register ───────────────────────────────────────────
 def register_user():
     current_user = g.user
 
@@ -483,8 +464,6 @@ def register_user():
     finally:
         cursor.close()
 
-
-# ── GET /user-management/verify-account ──────────────────────────────────────
 def verify_account():
     from datetime import datetime, timezone
 
@@ -579,7 +558,6 @@ def verify_account():
         cursor.close()
 
 
-# ── POST /user-management/users/<id>/resend-verification ─────────────────────
 def resend_verification_email(id):
     current_user = g.user
     from datetime import datetime, timezone, timedelta
@@ -694,7 +672,6 @@ def resend_verification_email(id):
         cursor.close()
 
 
-# ── PUT /user-management/users/<id> ──────────────────────────────────────────
 def update_user(id):
     current_user = g.user
 
@@ -891,7 +868,6 @@ def update_user(id):
         cursor.close()
 
 
-# ── DELETE /user-management/users/<id> (deactivate) ──────────────────────────
 def deactivate_user(id):
     current_user   = g.user
     body           = request.get_json(silent=True) or {}
@@ -932,7 +908,6 @@ def deactivate_user(id):
         return error_response(500, "Failed to deactivate user")
 
 
-# ── PUT /user-management/users/<id>/lock ─────────────────────────────────────
 def lock_user(id):
     current_user = g.user
 
@@ -984,7 +959,7 @@ def lock_user(id):
         return error_response(500, "Failed to lock account")
 
 
-# ── PUT /user-management/users/<id>/unlock ───────────────────────────────────
+
 def unlock_user(id):
     current_user = g.user
 
@@ -1039,7 +1014,6 @@ def unlock_user(id):
         return error_response(500, "Failed to unlock account")
 
 
-# ── GET /user-management/roles ────────────────────────────────────────────────
 def get_all_roles():
     try:
         rows = db_fetch(
@@ -1051,7 +1025,7 @@ def get_all_roles():
         return error_response(500, "Failed to fetch roles")
 
 
-# ── PUT /user-management/users/<id>/restore ──────────────────────────────────
+
 def restore_user(id):
     current_user   = g.user
     body           = request.get_json(silent=True) or {}
@@ -1095,7 +1069,6 @@ def restore_user(id):
         return error_response(500, "Failed to restore user")
 
 
-# ── GET /user-management/ranks ────────────────────────────────────────────────
 def get_ranks():
     try:
         rows = db_fetch(

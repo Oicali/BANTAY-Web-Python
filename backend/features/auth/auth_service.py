@@ -4,11 +4,9 @@ import os, random
 from config.database import get_db
 import httpx
 
-# ── Generate 6-digit OTP ──────────────────────────────────────────────────────
 def generate_otp() -> str:
     return str(random.randint(100000, 999999))
 
-# ── Send email via Brevo ──────────────────────────────────────────────────────
 def send_email(to: str, subject: str, html: str):
     import requests
     response = requests.post(
@@ -29,7 +27,6 @@ def send_email(to: str, subject: str, html: str):
     if not response.ok:
         raise Exception(f"Brevo API error: {response.text}")
 
-# ── Send OTP ──────────────────────────────────────────────────────────────────
 def send_otp(email: str) -> dict:
     try:
         conn   = get_db()
@@ -60,7 +57,6 @@ def send_otp(email: str) -> dict:
                 cursor.close()
                 return {"success": False, "message": "Maximum OTP requests reached. Try again tomorrow."}
 
-        # ── Cleanup expired OTP rows ──────────────────────────────────────────
         cursor.execute("DELETE FROM otp_requests WHERE expires_at < NOW()")
         conn.commit()
 
@@ -102,7 +98,6 @@ def send_otp(email: str) -> dict:
         print(f"Send OTP error: {e}")
         return {"success": False, "message": "Failed to send verification code"}
 
-# ── Verify OTP ────────────────────────────────────────────────────────────────
 def verify_otp(email: str, code: str) -> dict:
     try:
         conn   = get_db()
@@ -122,7 +117,6 @@ def verify_otp(email: str, code: str) -> dict:
             cursor.close()
             return {"success": False, "message": "OTP expired. Please request a new one."}
 
-        # plain text comparison (no bcrypt)
         if code != row["otp_hash"]:
             cursor.close()
             return {"success": False, "message": "Invalid OTP."}
@@ -136,6 +130,5 @@ def verify_otp(email: str, code: str) -> dict:
         print(f"Verify OTP error: {e}")
         return {"success": False, "message": "Verification failed."}
 
-# ── Resend OTP ────────────────────────────────────────────────────────────────
 def resend_otp(email: str) -> dict:
     return send_otp(email)

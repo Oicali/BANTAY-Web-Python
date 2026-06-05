@@ -16,8 +16,6 @@ from shared.utils.token_manager import create_token, revoke_all_user_tokens, rev
 def get_ip():
     return request.remote_addr
 
-
-# ── Login ─────────────────────────────────────────────────────────────────────
 def login():
     try:
         body     = request.get_json()

@@ -2,7 +2,6 @@
 
 import re
 
-# ── Login ─────────────────────────────────────────────────────────────────────
 def validate_login_input(username: str, password: str) -> list:
     errors = []
     if not username or not username.strip():
@@ -11,7 +10,6 @@ def validate_login_input(username: str, password: str) -> list:
         errors.append("Password is required")
     return errors
 
-# ── Email ─────────────────────────────────────────────────────────────────────
 def validate_email(email: str) -> list:
     errors = []
     if not email:
@@ -22,7 +20,6 @@ def validate_email(email: str) -> list:
         errors.append("Invalid email format")
     return errors
 
-# ── Password change ───────────────────────────────────────────────────────────
 def validate_password_change(current_password: str, new_password: str) -> list:
     errors = []
     if not current_password:
@@ -33,7 +30,6 @@ def validate_password_change(current_password: str, new_password: str) -> list:
         errors.append("New password must be at least 8 characters")
     return errors
 
-# ── Reset password ────────────────────────────────────────────────────────────
 def validate_reset_password(email: str, new_password: str) -> list:
     errors = []
     if not email:
@@ -44,7 +40,6 @@ def validate_reset_password(email: str, new_password: str) -> list:
         errors.append("Password must be at least 8 characters")
     return errors
 
-# ── OTP code ──────────────────────────────────────────────────────────────────
 def validate_otp_code(code: str) -> list:
     errors = []
     if not code:

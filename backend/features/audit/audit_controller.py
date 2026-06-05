@@ -22,7 +22,6 @@ def get_audit_logs():
         current_user  = g.user
         is_restricted = current_user.get("role") in RESTRICTED_ROLES
 
-        # ── Build WHERE clauses dynamically ──────────────────────────────────
         conditions: list[str] = []
         values:     list      = []
 
@@ -58,11 +57,9 @@ def get_audit_logs():
         conn   = get_db()
         cursor = conn.cursor(dictionary=True)
 
-        # ── Count query ───────────────────────────────────────────────────────
         cursor.execute(f"SELECT COUNT(*) AS cnt FROM audit_logs al {where}", values)
         total = int(cursor.fetchone()["cnt"])
 
-        # ── Data query ────────────────────────────────────────────────────────
         cursor.execute(
             f"""SELECT
                     al.log_id,
@@ -91,7 +88,6 @@ def get_audit_logs():
         )
         data_rows = cursor.fetchall()
 
-        # ── Stats ─────────────────────────────────────────────────────────────
         if is_restricted:
             cursor.execute(
                 """SELECT
@@ -115,7 +111,6 @@ def get_audit_logs():
         stats_row = cursor.fetchone()
         cursor.close()
 
-        # ── Shape log rows ────────────────────────────────────────────────────
         logs = []
         for row in data_rows:
             display_name = row.get("username") or ""
@@ -131,7 +126,6 @@ def get_audit_logs():
 
             row["display_name"] = display_name
             row["role_name"]    = row.get("role_name") or "—"
-            # Convert datetime to string for JSON serialization
             if row.get("created_at"):
                 row["created_at"] = str(row["created_at"])
             logs.append(row)

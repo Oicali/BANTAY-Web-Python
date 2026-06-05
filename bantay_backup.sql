@@ -31,7 +31,7 @@ CREATE TABLE `active_patroller` (
   PRIMARY KEY (`active_patroller_id`),
   UNIQUE KEY `active_patroller_officer_id_unique` (`officer_id`),
   CONSTRAINT `fk_active_patroller_officer` FOREIGN KEY (`officer_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -40,8 +40,36 @@ CREATE TABLE `active_patroller` (
 
 LOCK TABLES `active_patroller` WRITE;
 /*!40000 ALTER TABLE `active_patroller` DISABLE KEYS */;
+INSERT INTO `active_patroller` VALUES (1,'4620ed6a-6afb-41d7-83a5-caeab4931daf',NULL),(3,'18ce28cf-5255-4d61-96cc-f9fbf559d68a',NULL);
 /*!40000 ALTER TABLE `active_patroller` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trigger_check_patroller_role` BEFORE INSERT ON `active_patroller` FOR EACH ROW BEGIN
+    DECLARE v_role_id INT;
+
+    SELECT role_id INTO v_role_id
+    FROM users
+    WHERE user_id = NEW.officer_id
+    LIMIT 1;
+
+    IF v_role_id != 3 THEN
+        SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'User is not a patroller. Only users with role_id = 3 can be added as active patrollers.';
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
 
 --
 -- Table structure for table `after_patrol_reports`
@@ -89,7 +117,7 @@ CREATE TABLE `after_patrol_reports` (
   CONSTRAINT `apr_submitted_by_fkey` FOREIGN KEY (`submitted_by`) REFERENCES `active_patroller` (`active_patroller_id`) ON DELETE RESTRICT,
   CONSTRAINT `apr_num_govt_check` CHECK ((`num_govt_officials` >= 0)),
   CONSTRAINT `apr_num_officials_check` CHECK ((`num_officials` >= 0))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -98,6 +126,7 @@ CREATE TABLE `after_patrol_reports` (
 
 LOCK TABLES `after_patrol_reports` WRITE;
 /*!40000 ALTER TABLE `after_patrol_reports` DISABLE KEYS */;
+INSERT INTO `after_patrol_reports` VALUES (7,1,3,'2026-06-04','AM','08:00:00','20:00:00','','','','','','','','','',NULL,NULL,'Mobile Patrol 1','','12 hrs','asdfasdf','','','','[\"/uploads/patrol_reports/report_7_53bf88dae699445b831922b25a941049.jpeg\"]','2026-06-04 14:51:39','2026-06-04 14:51:39');
 /*!40000 ALTER TABLE `after_patrol_reports` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -134,7 +163,7 @@ CREATE TABLE `audit_logs` (
 
 LOCK TABLES `audit_logs` WRITE;
 /*!40000 ALTER TABLE `audit_logs` DISABLE KEYS */;
-INSERT INTO `audit_logs` VALUES ('013478a8-5fd3-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Unlocked','Unlocked account for user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:28'),('07b9c563-5fd3-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Deactivated','Deactivated user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:39'),('0cf4d1a8-5f52-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-03 21:42:23'),('0f9c3bb4-5ec1-11f1-b8a0-005056c00001',NULL,'asdf','Login Failed','Account does not exist','LOGIN','failed','Web Portal','127.0.0.1','2026-06-03 04:24:30'),('0fd9bc39-5fd3-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Restored','Restored user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:53'),('1934e017-5f52-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 21:42:44'),('19fccaa0-5fd3-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID c42e226d-4ae7-4591-a88b-0e6ab5f3150c','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:06:10'),('1ab900c3-5fce-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Registered','Registered new police user \"pnpbetaadmin\" with role Administrator','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:30:24'),('1f8c92f3-5ec9-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-03 05:22:13'),('24ec1eac-5ec9-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 05:22:22'),('2b7dcf8c-5fd0-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Registered','Registered new barangay user \"brgyjuandelacruz\" with role Brgy. Captain','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:45:11'),('35732a6c-5f51-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-03 21:36:21'),('3a90e0ee-5f60-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Modus Created','Created modus \"Stabbing\" for MURDER','CREATE','success','Web Portal','127.0.0.1','2026-06-03 23:23:52'),('3affd455-5ec8-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 05:15:50'),('3c5e7b9a-5f51-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 21:36:33'),('40b4e4b9-5f60-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Modus Updated','Changes made with Modus ID 1: Stabbing (MURDER)','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 23:24:03'),('443f9718-5fce-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Verification Email Resent','Resent verification email to user \"pnpbetaadmin\" (ilaciojairusmiguel@gmail.com)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:31:33'),('45f7e6aa-5f60-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Modus Deactivated','Changes made with Modus ID 1: Stabbing (MURDER)','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 23:24:12'),('48618aff-5fc2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Mobile Unit Created','Created mobile unit \"Mobile Patrol 1\" (Car/Sedan · ABC 1234)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 11:05:46'),('4a9d2bdf-5f60-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Modus Restored','Changes made with Modus ID 1: Stabbing (MURDER)','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 23:24:19'),('4d5659d1-5fc2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Mobile Unit Updated','Updated mobile unit ID 1 — \"Mobile Patrol 1\" (Car/Sedan · ABC 123)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 11:05:55'),('5088c1ff-5fc2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Mobile Unit Deleted','Deleted mobile unit ID 1','DELETE','success','Web Portal','127.0.0.1','2026-06-04 11:06:00'),('546ef220-5fd3-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID c42e226d-4ae7-4591-a88b-0e6ab5f3150c','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:07:48'),('58c6d277-5fc2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Mobile Unit Created','Created mobile unit \"Mobile 1\" (Car/Sedan · ABC 1234)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 11:06:14'),('5a4bd4ea-5fd0-11f1-b3c8-005056c00001','c42e226d-4ae7-4591-a88b-0e6ab5f3150c','brgyjuandelacruz','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 12:46:29'),('72234e79-5fcf-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Verification Email Resent','Resent verification email to user \"pnpbetaadmin\" (ilaciojairusmiguel@gmail.com)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:40:00'),('7d9c9472-5fd0-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID c42e226d-4ae7-4591-a88b-0e6ab5f3150c','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 12:47:29'),('84a08205-5f54-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-03 22:00:03'),('8c1eed06-5f54-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 22:00:15'),('9234919a-5ec3-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 04:42:28'),('96e622f7-5f4f-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 21:24:46'),('98d545b6-5f5c-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Password Changed','Password changed via OTP verification','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 22:57:53'),('a886cf7c-5f5c-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 22:58:19'),('ae8ad540-5f58-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-03 22:29:51'),('afb5611b-5fcf-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Verification Email Resent','Resent verification email to user \"pnpbetaadmin\" (ilaciojairusmiguel@gmail.com)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:41:43'),('b275831e-5fbd-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 10:32:57'),('b5dfeab2-5f58-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-03 22:30:03'),('cc2f8162-5f58-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 22:30:41'),('d35d8022-5fce-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 12:35:33'),('e51698c2-5f5d-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Profile & Email Updated','Updated profile and changed email to jairus.oicali@gmail.com','UPDATE','success','Web Portal','127.0.0.1','2026-06-03 23:07:10'),('e8cd545d-5fce-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','Verification Email Resent','Resent verification email to user \"pnpbetaadmin\" (ilaciojairusmiguel@gmail.com)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 12:36:09'),('ed6aa841-5fcf-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','pnpbetaadmin','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 12:43:27'),('f4f15a60-5fd2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:08'),('fb0f6339-5fd2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Updated','Updated user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:18'),('feb61c65-5fd2-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','User Locked','Locked account for user ID bdf30fec-d503-4085-8b11-4b4e74498555','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 13:05:24');
+INSERT INTO `audit_logs` VALUES ('07dead21-6006-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:10:44'),('0d21818f-6024-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Created','Created patrol \"Sector 2 Beat 1\" (2026-06-10 – 2026-06-17)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 22:45:38'),('1bf6b897-6021-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Password Reset','Password reset via OTP for jairus.oicali@gmail.com','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 22:24:34'),('228fb862-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Modus Created','Created modus \"Akyat Bahay\" for THEFT','CREATE','success','Web Portal','127.0.0.1','2026-06-04 22:39:04'),('277e8b7a-6009-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:33:05'),('28d853b1-6021-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 22:24:56'),('296a7d21-5ffb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Deleted','Deleted patrol ID 3','DELETE','success','Web Portal','127.0.0.1','2026-06-04 17:52:56'),('2e74d132-5ff8-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Updated','Updated patrol ID 1 — \"Sector 1 Beat 1\" (2026-06-04 – 2026-06-07)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 17:31:36'),('36349dc6-5fff-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:21:55'),('38831cee-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Modus Deactivated','Changes made with Modus ID 1: Akyat Bahay (THEFT)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 22:39:41'),('3b37a333-5ffb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Created','Created patrol \"Sector 1 Beat 3\" (2026-06-14 – 2026-06-17)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 17:53:26'),('41a61d99-5ffb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Detail Export Failed','Invalid format string','EXPORT','failed','Web Portal','127.0.0.1','2026-06-04 17:53:36'),('41fa16a8-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Modus Restored','Changes made with Modus ID 1: Akyat Bahay (THEFT)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 22:39:57'),('42c9f9af-5ff8-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Created','Created patrol \"Sector 1 Beat 2\" (2026-06-10 – 2026-06-17)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 17:32:10'),('474ef887-6029-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-04 23:23:03'),('4dab1855-6000-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Detail Exported','Exported patrol detail — \"Sector 1 Beat 1\"','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:29:44'),('4f478005-6029-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 23:23:16'),('4f66a67e-5ffe-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 18:15:28'),('4fce8aa2-5fec-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Registered','Registered new police user \"pnpbetapatrol\" with role Patrol','CREATE','success','Web Portal','127.0.0.1','2026-06-04 16:06:38'),('5242c3ce-6006-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 19:12:49'),('53e02659-5ffe-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:15:35'),('5cfa2ac3-5fef-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Registered','Registered new police user \"pnpcharliepatrol\" with role Patrol','CREATE','success','Web Portal','127.0.0.1','2026-06-04 16:28:28'),('65b21679-6024-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 22:48:06'),('6882db1a-5fef-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Updated','Updated user ID 18ce28cf-5255-4d61-96cc-f9fbf559d68a','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 16:28:48'),('6e12ea77-6022-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Registered','Registered new police user \"pnpbetainvestigator\" with role Investigator','CREATE','success','Web Portal','127.0.0.1','2026-06-04 22:34:01'),('7b3bedd5-5fee-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Verification Email Resent','Resent verification email to user \"pnpbetapatrol\" (ilaciojairus@gmail.com)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 16:22:09'),('8980b3ae-6007-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:21:31'),('90682277-6000-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:31:36'),('9252ac51-6021-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 22:27:53'),('95b0455e-6005-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-04 19:07:32'),('9694dbbe-6022-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Deactivated','Deactivated user ID 094fbd21-0396-4b12-a0d9-23c9ddc5ed12','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 22:35:09'),('9abee0ff-5fff-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:24:44'),('9b44850b-5feb-11f1-b3c8-005056c00001',NULL,'II26010_pnp','Login Failed','Account does not exist','LOGIN','failed','Web Portal','127.0.0.1','2026-06-04 16:01:35'),('9e1107e4-6005-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 19:07:46'),('a3851c63-6003-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Updated','Updated patrol ID 1 — \"Sector 1 Beat 1\" (2026-06-04 – 2026-06-07)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 18:53:36'),('a63b2e6b-5ff9-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 17:42:06'),('a653c5d9-6009-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:36:38'),('aa08bb59-5ff9-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 17:42:12'),('adc9fa6d-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Mobile Unit Created','Created mobile unit \"Mobile Unit 2\" (SUV/Van · DEF 5678)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 22:42:58'),('b97e8ad6-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Mobile Unit Deleted','Deleted mobile unit ID 2','DELETE','success','Web Portal','127.0.0.1','2026-06-04 22:43:17'),('bd8966a8-6005-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:08:39'),('bfbd2391-5ffd-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 2 patrol(s) (1 active, 1 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:11:27'),('c0d1485d-5ff7-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Created','Created patrol \"Sector 1 Beat 1\" (2026-06-04 – 2026-06-11)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 17:28:32'),('c150d2c8-6003-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Updated','Updated user ID 18ce28cf-5255-4d61-96cc-f9fbf559d68a','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 18:54:26'),('c227e5ae-6023-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Mobile Unit Created','Created mobile unit \"Mobile Patrol 2\" (SUV/Van · DEF 5678)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 22:43:32'),('c26c75bb-5feb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 16:02:40'),('c615dedb-608a-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-05 11:00:57'),('c9070c2c-6007-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 19:23:17'),('c98526eb-5fff-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:26:02'),('ce2776c0-5ffa-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Updated','Updated patrol ID 2 — \"Sector 1 Beat 2\" (2026-06-10 – 2026-06-13)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 17:50:23'),('d096db25-5fee-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Updated','Updated user ID 4620ed6a-6afb-41d7-83a5-caeab4931daf','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 16:24:33'),('d140cc5b-6020-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-04 22:22:29'),('d658ba5e-5fee-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Updated','Updated user ID 4620ed6a-6afb-41d7-83a5-caeab4931daf','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 16:24:42'),('dafed5f2-6024-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Deleted','Deleted after patrol report ID 6','DELETE','success','Web Portal','127.0.0.1','2026-06-04 22:51:23'),('ddb5246b-6004-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Updated','Updated patrol ID 1 — \"Sector 1 Beat 1\" (2026-06-04 – 2026-06-07)','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 19:02:24'),('e00c4075-5fff-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:26:40'),('e06f5b13-5ffd-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Detail Exported','Exported patrol detail — \"Sector 1 Beat 1\"','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:12:22'),('e2fc77fa-5fff-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:26:45'),('e32f0627-5feb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Profile Updated','Updated profile','UPDATE','success','Web Portal','127.0.0.1','2026-06-04 16:03:35'),('e49e3e99-6024-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','After Patrol Report Submitted','Submitted after patrol report for patrol ID 1 — 2026-06-04 AM','CREATE','success','Mobile App','127.0.0.1','2026-06-04 22:51:39'),('e4c66032-5fef-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Mobile Unit Created','Created mobile unit \"Mobile Patrol 1\" (Car/Sedan · ABC 1234)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 16:32:16'),('e556d812-5ffa-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol Created','Created patrol \"Sector 1 Beat 3\" (2026-06-14 – 2026-06-17)','CREATE','success','Web Portal','127.0.0.1','2026-06-04 17:51:01'),('e7ca0efc-6004-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Logout','User logged out','LOGOUT','success','Web Portal','127.0.0.1','2026-06-04 19:02:41'),('e92e8c4c-5ffe-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','Patrol List Exported','Exported patrol list — 3 patrol(s) (1 active, 2 upcoming, 0 completed)','EXPORT','success','Web Portal','127.0.0.1','2026-06-04 18:19:46'),('f98ade97-6005-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','User Login','Logged in via web portal','LOGIN','success','Web Portal','127.0.0.1','2026-06-04 19:10:20');
 /*!40000 ALTER TABLE `audit_logs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -160,7 +189,7 @@ CREATE TABLE `barangay_details` (
 
 LOCK TABLES `barangay_details` WRITE;
 /*!40000 ALTER TABLE `barangay_details` DISABLE KEYS */;
-INSERT INTO `barangay_details` VALUES ('99f14253-5ebd-11f1-b8a0-005056c00001','042103046'),('c42e226d-4ae7-4591-a88b-0e6ab5f3150c','ANIBAN I');
+INSERT INTO `barangay_details` VALUES ('6cbc1427-5feb-11f1-b3c8-005056c00001','042103046');
 /*!40000 ALTER TABLE `barangay_details` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -190,7 +219,7 @@ CREATE TABLE `crime_modus_reference` (
 
 LOCK TABLES `crime_modus_reference` WRITE;
 /*!40000 ALTER TABLE `crime_modus_reference` DISABLE KEYS */;
-INSERT INTO `crime_modus_reference` VALUES (1,'MURDER','Stabbing','Stabs the victim with sharp object',1,'2026-06-03 15:23:52','2026-06-03 15:24:19');
+INSERT INTO `crime_modus_reference` VALUES (1,'THEFT','Akyat Bahay','Suspect targets a house',1,'2026-06-04 14:39:04','2026-06-04 14:39:57');
 /*!40000 ALTER TABLE `crime_modus_reference` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -215,7 +244,7 @@ CREATE TABLE `mobile_unit` (
   KEY `mobile_unit_created_by_fkey` (`created_by`),
   CONSTRAINT `mobile_unit_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
   CONSTRAINT `mobile_unit_vehicle_type_check` CHECK ((`vehicle_type` in (_utf8mb4'Car/Sedan',_utf8mb4'SUV/Van')))
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -224,7 +253,7 @@ CREATE TABLE `mobile_unit` (
 
 LOCK TABLES `mobile_unit` WRITE;
 /*!40000 ALTER TABLE `mobile_unit` DISABLE KEYS */;
-INSERT INTO `mobile_unit` VALUES (2,'Mobile 1','Car/Sedan','ABC 1234','99f14253-5ebd-11f1-b8a0-005056c00001','2026-06-04 03:06:14','2026-06-04 03:06:14');
+INSERT INTO `mobile_unit` VALUES (1,'Mobile Patrol 1','Car/Sedan','ABC 1234','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 08:32:16','2026-06-04 08:32:16'),(3,'Mobile Patrol 2','SUV/Van','DEF 5678','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 14:43:32','2026-06-04 14:43:32');
 /*!40000 ALTER TABLE `mobile_unit` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -285,7 +314,6 @@ CREATE TABLE `otp_requests` (
 
 LOCK TABLES `otp_requests` WRITE;
 /*!40000 ALTER TABLE `otp_requests` DISABLE KEYS */;
-INSERT INTO `otp_requests` VALUES ('invsysmarkitbot@gmail.com','233265','2026-06-03 04:42:11',3,'2026-06-03 04:40:11');
 /*!40000 ALTER TABLE `otp_requests` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -311,7 +339,7 @@ CREATE TABLE `patrol_assignment` (
   CONSTRAINT `patrol_assignment_created_by_fkey` FOREIGN KEY (`created_by`) REFERENCES `users` (`user_id`) ON DELETE SET NULL,
   CONSTRAINT `patrol_assignment_mobile_unit_fkey` FOREIGN KEY (`mobile_unit_id`) REFERENCES `mobile_unit` (`mobile_unit_id`) ON DELETE CASCADE,
   CONSTRAINT `valid_date_range` CHECK ((`end_date` >= `start_date`))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=6 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -320,6 +348,7 @@ CREATE TABLE `patrol_assignment` (
 
 LOCK TABLES `patrol_assignment` WRITE;
 /*!40000 ALTER TABLE `patrol_assignment` DISABLE KEYS */;
+INSERT INTO `patrol_assignment` VALUES (1,'Sector 1 Beat 1',1,'2026-06-04','2026-06-07','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 09:28:32','2026-06-04 11:02:24'),(2,'Sector 1 Beat 2',1,'2026-06-10','2026-06-13','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 09:32:10','2026-06-04 09:50:23'),(4,'Sector 1 Beat 3',1,'2026-06-14','2026-06-17','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 09:53:25','2026-06-04 09:53:25'),(5,'Sector 2 Beat 1',3,'2026-06-10','2026-06-17','6cbc1427-5feb-11f1-b3c8-005056c00001','2026-06-04 14:45:37','2026-06-04 14:45:37');
 /*!40000 ALTER TABLE `patrol_assignment` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -343,7 +372,7 @@ CREATE TABLE `patrol_assignment_patroller` (
   CONSTRAINT `pap_patrol_fkey` FOREIGN KEY (`patrol_id`) REFERENCES `patrol_assignment` (`patrol_id`) ON DELETE CASCADE,
   CONSTRAINT `pap_patroller_fkey` FOREIGN KEY (`active_patroller_id`) REFERENCES `active_patroller` (`active_patroller_id`) ON DELETE CASCADE,
   CONSTRAINT `patrol_assignment_patroller_shift_check` CHECK ((`shift` in (_utf8mb4'AM',_utf8mb4'PM')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=41 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -352,6 +381,7 @@ CREATE TABLE `patrol_assignment_patroller` (
 
 LOCK TABLES `patrol_assignment_patroller` WRITE;
 /*!40000 ALTER TABLE `patrol_assignment_patroller` DISABLE KEYS */;
+INSERT INTO `patrol_assignment_patroller` VALUES (5,1,1,'AM','2026-06-08','2026-06-04 09:28:32'),(6,1,1,'AM','2026-06-09','2026-06-04 09:28:32'),(7,1,1,'AM','2026-06-10','2026-06-04 09:28:32'),(8,1,1,'AM','2026-06-11','2026-06-04 09:28:32'),(9,2,1,'AM','2026-06-10','2026-06-04 09:32:10'),(10,2,1,'AM','2026-06-11','2026-06-04 09:32:10'),(11,2,1,'AM','2026-06-12','2026-06-04 09:32:10'),(12,2,1,'AM','2026-06-13','2026-06-04 09:32:10'),(13,2,1,'AM','2026-06-14','2026-06-04 09:32:10'),(14,2,1,'AM','2026-06-15','2026-06-04 09:32:10'),(15,2,1,'AM','2026-06-16','2026-06-04 09:32:10'),(16,2,1,'AM','2026-06-17','2026-06-04 09:32:10'),(21,4,1,'AM','2026-06-14','2026-06-04 09:53:26'),(22,4,1,'AM','2026-06-15','2026-06-04 09:53:26'),(23,4,1,'AM','2026-06-16','2026-06-04 09:53:26'),(24,4,1,'AM','2026-06-17','2026-06-04 09:53:26'),(25,1,1,'AM','2026-06-04','2026-06-04 11:02:23'),(26,1,3,'AM','2026-06-04','2026-06-04 11:02:23'),(27,1,1,'AM','2026-06-05','2026-06-04 11:02:23'),(28,1,3,'AM','2026-06-05','2026-06-04 11:02:23'),(29,1,1,'AM','2026-06-06','2026-06-04 11:02:23'),(30,1,3,'AM','2026-06-06','2026-06-04 11:02:23'),(31,1,1,'AM','2026-06-07','2026-06-04 11:02:23'),(32,1,3,'AM','2026-06-07','2026-06-04 11:02:23'),(33,5,3,'AM','2026-06-10','2026-06-04 14:45:38'),(34,5,3,'AM','2026-06-11','2026-06-04 14:45:38'),(35,5,3,'AM','2026-06-12','2026-06-04 14:45:38'),(36,5,3,'AM','2026-06-13','2026-06-04 14:45:38'),(37,5,3,'AM','2026-06-14','2026-06-04 14:45:38'),(38,5,3,'AM','2026-06-15','2026-06-04 14:45:38'),(39,5,3,'AM','2026-06-16','2026-06-04 14:45:38'),(40,5,3,'AM','2026-06-17','2026-06-04 14:45:38');
 /*!40000 ALTER TABLE `patrol_assignment_patroller` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -377,7 +407,7 @@ CREATE TABLE `patrol_assignment_route` (
   KEY `par_patrol_fkey` (`patrol_id`),
   CONSTRAINT `par_patrol_fkey` FOREIGN KEY (`patrol_id`) REFERENCES `patrol_assignment` (`patrol_id`) ON DELETE CASCADE,
   CONSTRAINT `patrol_assignment_route_shift_check` CHECK ((`shift` in (_utf8mb4'AM',_utf8mb4'PM')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=96 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -386,6 +416,7 @@ CREATE TABLE `patrol_assignment_route` (
 
 LOCK TABLES `patrol_assignment_route` WRITE;
 /*!40000 ALTER TABLE `patrol_assignment_route` DISABLE KEYS */;
+INSERT INTO `patrol_assignment_route` VALUES (4,1,'2026-06-04',NULL,'Tasksssss 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(5,1,'2026-06-04',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(6,1,'2026-06-04',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(7,1,'2026-06-05',NULL,'Tasksssss 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(8,1,'2026-06-05',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(9,1,'2026-06-05',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(10,1,'2026-06-06',NULL,'Tasksssss 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(11,1,'2026-06-06',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(12,1,'2026-06-06',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(13,1,'2026-06-07',NULL,'Tasksssss 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(14,1,'2026-06-07',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(15,1,'2026-06-07',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(16,1,'2026-06-08',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(17,1,'2026-06-08',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(18,1,'2026-06-08',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(19,1,'2026-06-09',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(20,1,'2026-06-09',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(21,1,'2026-06-09',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(22,1,'2026-06-10',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(23,1,'2026-06-10',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(24,1,'2026-06-10',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(25,1,'2026-06-11',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:28:32'),(26,1,'2026-06-11',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:28:32'),(27,1,'2026-06-11',NULL,'Task 3','10:01:00','11:00:00',3,'AM','2026-06-04 09:28:32'),(28,1,'2026-06-04',NULL,'Task 4','11:01:00','12:00:00',4,'AM','2026-06-04 09:31:15'),(29,1,'2026-06-05',NULL,'Task 4','11:01:00','12:00:00',4,'AM','2026-06-04 09:31:34'),(30,1,'2026-06-06',NULL,'Task 4','11:01:00','12:00:00',4,'AM','2026-06-04 09:31:35'),(31,1,'2026-06-07',NULL,'Task 4','11:01:00','12:00:00',4,'AM','2026-06-04 09:31:35'),(38,2,'2026-06-10',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(39,2,'2026-06-10',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(40,2,'2026-06-11',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(41,2,'2026-06-11',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(42,2,'2026-06-12',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(43,2,'2026-06-12',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(44,2,'2026-06-13',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(45,2,'2026-06-13',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(46,2,'2026-06-14',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(47,2,'2026-06-14',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(48,2,'2026-06-15',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(49,2,'2026-06-15',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(50,2,'2026-06-16',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(51,2,'2026-06-16',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(52,2,'2026-06-17',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:32:10'),(53,2,'2026-06-17',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 09:32:10'),(54,2,'2026-06-10','HABAY I',NULL,NULL,NULL,-1,'AM','2026-06-04 09:50:23'),(55,2,'2026-06-10','MABOLO',NULL,NULL,NULL,-2,'AM','2026-06-04 09:50:23'),(56,2,'2026-06-10','SINEGUELASAN',NULL,NULL,NULL,-3,'AM','2026-06-04 09:50:23'),(64,4,'2026-06-14','MAMBOG I',NULL,NULL,NULL,-1,'AM','2026-06-04 09:53:26'),(65,4,'2026-06-14','MAMBOG II',NULL,NULL,NULL,-2,'AM','2026-06-04 09:53:26'),(66,4,'2026-06-14','MAMBOG III',NULL,NULL,NULL,-3,'AM','2026-06-04 09:53:26'),(67,4,'2026-06-14',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:53:26'),(68,4,'2026-06-15',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:53:26'),(69,4,'2026-06-16',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:53:26'),(70,4,'2026-06-17',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 09:53:26'),(74,1,'2026-06-04','MAMBOG III',NULL,NULL,NULL,-1,'AM','2026-06-04 11:02:24'),(75,1,'2026-06-04','MAMBOG II',NULL,NULL,NULL,-2,'AM','2026-06-04 11:02:24'),(76,1,'2026-06-04','MAMBOG I',NULL,NULL,NULL,-3,'AM','2026-06-04 11:02:24'),(77,5,'2026-06-10','MOLINO VII',NULL,NULL,NULL,-1,'AM','2026-06-04 14:45:38'),(78,5,'2026-06-10','MOLINO III',NULL,NULL,NULL,-2,'AM','2026-06-04 14:45:38'),(79,5,'2026-06-10','MOLINO IV',NULL,NULL,NULL,-3,'AM','2026-06-04 14:45:38'),(80,5,'2026-06-10',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(81,5,'2026-06-10',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(82,5,'2026-06-11',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(83,5,'2026-06-11',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(84,5,'2026-06-12',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(85,5,'2026-06-12',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(86,5,'2026-06-13',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(87,5,'2026-06-13',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(88,5,'2026-06-14',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(89,5,'2026-06-14',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(90,5,'2026-06-15',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(91,5,'2026-06-15',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(92,5,'2026-06-16',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(93,5,'2026-06-16',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38'),(94,5,'2026-06-17',NULL,'Task 1','08:00:00','09:00:00',1,'AM','2026-06-04 14:45:38'),(95,5,'2026-06-17',NULL,'Task 2','09:01:00','10:00:00',2,'AM','2026-06-04 14:45:38');
 /*!40000 ALTER TABLE `patrol_assignment_route` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -412,6 +443,7 @@ CREATE TABLE `pending_credentials` (
 
 LOCK TABLES `pending_credentials` WRITE;
 /*!40000 ALTER TABLE `pending_credentials` DISABLE KEYS */;
+INSERT INTO `pending_credentials` VALUES ('094fbd21-0396-4b12-a0d9-23c9ddc5ed12','{\"username\": \"pnpbetainvestigator\", \"password\": \"LT4ozx$Y@GYU\", \"userType\": \"police\", \"role\": \"Investigator\"}','2026-06-05 14:34:01','2026-06-04 22:34:00'),('18ce28cf-5255-4d61-96cc-f9fbf559d68a','{\"username\": \"pnpcharliepatrol\", \"password\": \"LNRv9QSgHKW5\", \"userType\": \"police\", \"role\": \"Patrol\"}','2026-06-05 08:28:28','2026-06-04 16:28:27'),('4620ed6a-6afb-41d7-83a5-caeab4931daf','{\"username\": \"pnpbetapatrol\", \"password\": \"XCZp9k$3Q?Hb\", \"userType\": \"police\", \"role\": \"Patrol\"}','2026-06-05 08:22:09','2026-06-04 16:06:37');
 /*!40000 ALTER TABLE `pending_credentials` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -428,7 +460,7 @@ CREATE TABLE `pnp_ranks` (
   `abbreviation` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
   `rank_order` int NOT NULL,
   PRIMARY KEY (`rank_id`)
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -437,7 +469,7 @@ CREATE TABLE `pnp_ranks` (
 
 LOCK TABLES `pnp_ranks` WRITE;
 /*!40000 ALTER TABLE `pnp_ranks` DISABLE KEYS */;
-INSERT INTO `pnp_ranks` VALUES (1,'Patrolman / Patrolwoman','Pat',1),(2,'Police Corporal','PCpl',2),(3,'Police Staff Sergeant','PSSg',3);
+INSERT INTO `pnp_ranks` VALUES (1,'Patrolman / Patrolwoman','Pat',1),(2,'Police Corporal','PCpl',2),(3,'Police Staff Sergeant','PSSg',3),(4,'Police Master Sergeant','PMSg',4),(5,'Police Senior Master Sergeant','PSMSg',5),(6,'Police Chief Master Sergeant','PCMSg',6),(7,'Police Executive Master Sergeant','PEMSg',7),(8,'Police Lieutenant Junior Grade','PLTJG',8),(9,'Police Lieutenant','PLT',9),(10,'Police Captain','PCPT',10),(11,'Police Major','PMAJ',11),(12,'Police Lieutenant Colonel','PLTCOL',12),(13,'Police Colonel','PCOL',13),(14,'Police Brigadier General','PBGEN',14),(15,'Police Major General','PMGEN',15),(16,'Police Lieutenant General','PLTGEN',16),(17,'Police General','PGEN',17);
 /*!40000 ALTER TABLE `pnp_ranks` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -455,7 +487,7 @@ CREATE TABLE `roles` (
   PRIMARY KEY (`role_id`),
   UNIQUE KEY `roles_role_name_key` (`role_name`),
   CONSTRAINT `roles_user_type_check` CHECK ((`user_type` in (_utf8mb4'police',_utf8mb4'barangay')))
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -464,7 +496,7 @@ CREATE TABLE `roles` (
 
 LOCK TABLES `roles` WRITE;
 /*!40000 ALTER TABLE `roles` DISABLE KEYS */;
-INSERT INTO `roles` VALUES (1,'Administrator','police'),(2,'Investigator','police'),(3,'Patrol','police'),(4,'Brgy. Captain','barangay'),(5,'Technical Administrator','police'),(6,'Brgy. Official','barangay');
+INSERT INTO `roles` VALUES (1,'Technical Administrator','police'),(2,'Administrator','police'),(3,'Patrol','police'),(4,'Investigator','police'),(5,'Brgy. Captain','barangay'),(6,'Brgy. Official','barangay');
 /*!40000 ALTER TABLE `roles` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -498,7 +530,7 @@ CREATE TABLE `tokens` (
 
 LOCK TABLES `tokens` WRITE;
 /*!40000 ALTER TABLE `tokens` DISABLE KEYS */;
-INSERT INTO `tokens` VALUES ('19347268-5f52-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','3620eaad4bd8cb7ca56e72dc8b2c07b267510894485631e5ebddae49305864ff','2026-06-04 13:42:44',1,'2026-06-03 22:00:03','2026-06-03 21:42:44'),('1ab82a2f-5fce-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','e4a96d5d3c65691f7d9728934887c725edcdb4439e104d328aa1044f7f03289b','2026-06-05 04:30:24',1,'2026-06-04 12:31:33','2026-06-04 12:30:24'),('24eba836-5ec9-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','285020f8ed8b38c505c88a2d7931e3c45f0c38d74432ed07612f1605aa544f4d','2026-06-03 21:22:23',1,'2026-06-03 22:57:53','2026-06-03 05:22:22'),('2b10b610-5fd0-11f1-b3c8-005056c00001','c42e226d-4ae7-4591-a88b-0e6ab5f3150c','2c9367ba02782066f4d0aede9f4f70dd0c295b2d7a17c83ebd34daa888ce2d93','2026-06-05 04:45:11',1,'2026-06-04 12:45:34','2026-06-04 12:45:10'),('3aff7329-5ec8-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','46b5de96ca853af51e8f891147c800776dd45fa704e80e045c554d206b0a682d','2026-06-03 21:15:50',1,'2026-06-03 05:22:13','2026-06-03 05:15:50'),('3c5e05d6-5f51-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','cc1092ddd03c178cc57e0df4829045497ad5f22a303368040c9f712bee5e2d3c','2026-06-04 13:36:33',1,'2026-06-03 21:42:23','2026-06-03 21:36:33'),('443ee3c1-5fce-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','22093b486fd27735b4f879d283aae5acff36ea3768f348ead2044fdb90a30713','2026-06-05 04:31:34',1,'2026-06-04 12:36:09','2026-06-04 12:31:33'),('5a4b8245-5fd0-11f1-b3c8-005056c00001','c42e226d-4ae7-4591-a88b-0e6ab5f3150c','f4f187f657dc5356b801ebe959f56aa3017959859137012bcd389fa2556bc7da','2026-06-05 04:46:30',0,NULL,'2026-06-04 12:46:29'),('6f731f26-5ebe-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','8c587ad7597170174dae10758634c388dda3cb39e9ea58b7cb777d517ece9909','2026-06-03 20:05:43',1,'2026-06-03 04:06:10','2026-06-03 04:05:43'),('71abf0b2-5fcf-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','b535cb2194e3a07323a16ddbd7bb31b9c1a6e0841ce2c97ce9ec9643174326d3','2026-06-05 04:40:00',1,'2026-06-04 12:41:42','2026-06-04 12:39:59'),('8c1e5b46-5f54-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','e882f2ec457a1cca48415c809cc56bfb8ec22bd05166f01c235781b4243ab2b6','2026-06-04 14:00:16',1,'2026-06-03 22:29:51','2026-06-03 22:00:15'),('92342813-5ec3-11f1-b8a0-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','2ce8f2c8afa22acba626897f70385d4e148df6c5983a83c14ed173ce93fa81a3','2026-06-03 20:42:29',1,'2026-06-03 22:57:53','2026-06-03 04:42:28'),('96e429c2-5f4f-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','7be848851475df41dbbba645bb0e2913064bffd547fe732c94dd901f03a0d13e','2026-06-04 13:24:46',1,'2026-06-03 21:36:21','2026-06-03 21:24:46'),('a8867146-5f5c-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','621439aa1651e2c45dccce025ae05707b37af22ce02e1f5621b64eba27614b78','2026-06-04 14:58:19',0,NULL,'2026-06-03 22:58:19'),('af524a0e-5fcf-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','7923114a1a8e1389d610d6b4364bb0226641dca1e4e506f2b3ce221674136911','2026-06-05 04:41:43',1,'2026-06-04 12:41:51','2026-06-04 12:41:42'),('b274ec86-5fbd-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','e688b5c8597c6062403bcf27788350dc78f5ab890495d38beddcbf7e77e73e3f','2026-06-05 02:32:57',0,NULL,'2026-06-04 10:32:57'),('b5df83af-5f58-11f1-b3c8-005056c00001','99f14253-5ebd-11f1-b8a0-005056c00001','16df0714e70b659895f0f299f563d074d28b09ada1ca9940213f2d55e7af1c03','2026-06-04 14:30:04',1,'2026-06-03 22:57:53','2026-06-03 22:30:03'),('e8ccaee2-5fce-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','5d89f7081013531524b76617109715b13fdfc315a95d2d197191e909f5859a8d','2026-06-05 04:36:10',1,'2026-06-04 12:39:59','2026-06-04 12:36:09'),('ed6a48b4-5fcf-11f1-b3c8-005056c00001','bdf30fec-d503-4085-8b11-4b4e74498555','15eaf7e19fc94cfa4d3bef7dc00075b62707765a48b08b5ed38244d87fe58597','2026-06-05 04:43:27',0,NULL,'2026-06-04 12:43:27');
+INSERT INTO `tokens` VALUES ('28d7f1ab-6021-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','c69399d5b9b83543e479bf6977682f9dbcca92279768a9a78e2804856a0f8d39','2026-06-05 14:24:56',0,NULL,'2026-06-04 22:24:56'),('4f4682c8-6029-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','8f510efd598798662f888852d067fb4fb81934eebfbc67186deecadf497d4fc9','2026-06-05 15:23:17',0,NULL,'2026-06-04 23:23:16'),('4f58b455-5fec-11f1-b3c8-005056c00001','4620ed6a-6afb-41d7-83a5-caeab4931daf','d18bcc289c38261c668993c8fac3bb653f2542fecb37066a288b796f5dcb37b6','2026-06-05 08:06:37',1,'2026-06-04 16:22:09','2026-06-04 16:06:37'),('4f6649f7-5ffe-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','35c8b6842c558f9d89e503fa71e960e6138567853a8c59e000d6f8a4c7292fd6','2026-06-05 10:15:28',1,'2026-06-04 19:02:41','2026-06-04 18:15:28'),('5c8d529b-5fef-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','e4ee1a8f1b7b747b0a73619eead131174288a0c547b3efc53bc1a900e0b282a6','2026-06-05 08:28:28',0,NULL,'2026-06-04 16:28:27'),('65b1bcba-6024-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','d9c44bcde02b8b18a473a82bf3743f5731d7d396620eee5ee63cf182d37b1170','2026-06-05 14:48:07',1,'2026-06-04 23:23:03','2026-06-04 22:48:06'),('6d97fcb4-6022-11f1-b3c8-005056c00001','094fbd21-0396-4b12-a0d9-23c9ddc5ed12','9a2d241f283c5ee46d38003614f24dad1d4424c4b4687844379750c4fe7588cb','2026-06-05 14:34:01',0,NULL,'2026-06-04 22:34:00'),('7ac62a87-5fee-11f1-b3c8-005056c00001','4620ed6a-6afb-41d7-83a5-caeab4931daf','fd872a080994147740f2e9019d27516b11f855f8104fd2c7b795eebce9e0f1a4','2026-06-05 08:22:09',0,NULL,'2026-06-04 16:22:09'),('9e1077e1-6005-11f1-b3c8-005056c00001','18ce28cf-5255-4d61-96cc-f9fbf559d68a','b605c6914a736d9955a2dd269ae975a1590ad71865ebb1dd08c1ad99b47322f8','2026-06-05 11:07:47',0,NULL,'2026-06-04 19:07:46'),('c26bec18-5feb-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','265a652790b6c62bde90ea83b759cf8e59404f76a9bf315c46696ac95102f980','2026-06-05 08:02:41',1,'2026-06-04 19:07:32','2026-06-04 16:02:40'),('c6157129-608a-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','de736acfbd05c89920d6f8b6ae9138eacaa587b8af77a4fcdb7e2ea1ab1c1da1','2026-06-06 03:00:57',0,NULL,'2026-06-05 11:00:57'),('f98a79dd-6005-11f1-b3c8-005056c00001','6cbc1427-5feb-11f1-b3c8-005056c00001','c33e03164793c0aae8ca0b0118b38278004ebe7a83f5a1210d4f4ebe79a1c6c4','2026-06-05 11:10:20',1,'2026-06-04 22:22:29','2026-06-04 19:10:20');
 /*!40000 ALTER TABLE `tokens` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -523,7 +555,7 @@ CREATE TABLE `user_addresses` (
   KEY `idx_user_addresses_barangay_code` (`barangay_code`),
   KEY `idx_user_addresses_municipality_code` (`municipality_code`),
   CONSTRAINT `user_addresses_user_id_fkey` FOREIGN KEY (`user_id`) REFERENCES `users` (`user_id`) ON DELETE CASCADE
-) ENGINE=InnoDB AUTO_INCREMENT=217 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -532,7 +564,7 @@ CREATE TABLE `user_addresses` (
 
 LOCK TABLES `user_addresses` WRITE;
 /*!40000 ALTER TABLE `user_addresses` DISABLE KEYS */;
-INSERT INTO `user_addresses` VALUES (210,'99f14253-5ebd-11f1-b8a0-005056c00001','040000000','042100000','042103000','042103046','BLk 2 Lot 17 Medina Street Phase 2A'),(215,'bdf30fec-d503-4085-8b11-4b4e74498555','040000000','042100000','042103000','042103004',NULL),(216,'c42e226d-4ae7-4591-a88b-0e6ab5f3150c','040000000','042100000','042103000','ANIBAN I',NULL);
+INSERT INTO `user_addresses` VALUES (1,'6cbc1427-5feb-11f1-b3c8-005056c00001','040000000','042100000','042103000','042103046',NULL),(2,'4620ed6a-6afb-41d7-83a5-caeab4931daf','010000000','012800000','012812000','012812056',NULL),(3,'18ce28cf-5255-4d61-96cc-f9fbf559d68a','150000000','150700000','150709000','150709001',NULL),(8,'094fbd21-0396-4b12-a0d9-23c9ddc5ed12','040000000','042100000','042103000','042103004',NULL);
 /*!40000 ALTER TABLE `user_addresses` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -597,9 +629,79 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES ('99f14253-5ebd-11f1-b8a0-005056c00001','II26010_pnp','SecurePass123!','jairus.oicali@gmail.com','Juan','Dela Cruz','Santos',NULL,'+639171234567',NULL,'Male','1990-06-15',5,'police','/uploads/profiles/99f14253-5ebd-11f1-b8a0-005056c00001_94050f4fea1a41e7b0e44013270a0ae5.png','verified',NULL,0,'2026-06-04 10:32:57',NULL,'2026-06-03 03:59:44','2026-06-04 13:07:19','2026-06-03 23:07:10','2026-06-03 22:57:53',1,1780498673068,NULL,NULL),('bdf30fec-d503-4085-8b11-4b4e74498555','pnpbetaadmin','SecurePass123!','ilaciojairusmiguel@gmail.com','Beta','Admin',NULL,NULL,'+639102349802',NULL,'Male','2008-06-03',1,'police',NULL,'verified',NULL,0,'2026-06-04 12:43:27',NULL,'2026-06-04 12:30:24','2026-06-04 13:07:19',NULL,NULL,0,NULL,2,NULL),('c42e226d-4ae7-4591-a88b-0e6ab5f3150c','brgyjuandelacruz','SecurePass123!','jairusmiguelilacio05@gmail.com','Juan','Dela cruz',NULL,NULL,'+639123941092',NULL,'Male','2008-06-03',4,'barangay',NULL,'verified',NULL,0,'2026-06-04 12:46:29',NULL,'2026-06-04 12:45:10','2026-06-04 13:07:48',NULL,NULL,0,NULL,NULL,NULL);
+INSERT INTO `users` VALUES ('094fbd21-0396-4b12-a0d9-23c9ddc5ed12','pnpbetainvestigator','SecurePass123!','user@gmail.com','Beta','Investigator',NULL,NULL,'+639012938409',NULL,'Male','2008-06-03',4,'police',NULL,'deactivated',NULL,0,NULL,NULL,'2026-06-04 22:34:00','2026-06-04 22:47:41',NULL,NULL,0,NULL,2,NULL),('18ce28cf-5255-4d61-96cc-f9fbf559d68a','pnpcharliepatrol','SecurePass123!','ilaciojairusmiguel@gmail.com','Charlie','Patrol',NULL,NULL,'+639021934091',NULL,'Male','2008-06-03',3,'police',NULL,'verified',NULL,0,'2026-06-04 22:48:06',NULL,'2026-06-04 16:28:27','2026-06-04 22:48:06',NULL,NULL,0,NULL,1,NULL),('4620ed6a-6afb-41d7-83a5-caeab4931daf','pnpbetapatrol','SecurePass123!','ilaciojairus@gmail.com','Beta','Patrol',NULL,NULL,'+639023498109',NULL,'Male','2008-06-03',3,'police',NULL,'verified',NULL,0,NULL,NULL,'2026-06-04 16:06:37','2026-06-04 19:05:51',NULL,NULL,0,NULL,1,NULL),('6cbc1427-5feb-11f1-b3c8-005056c00001','II26010_pnp','SecurePass1234!','jairus.oicali@gmail.com','Juan','Dela Cruz','Santos',NULL,'+639171234567',NULL,'Male','2003-10-05',1,'police','/uploads/profiles/6cbc1427-5feb-11f1-b3c8-005056c00001_a5d499f6d28048788e500227f5a47895.png','verified',NULL,0,'2026-06-05 11:00:57',NULL,'2026-06-04 16:00:17','2026-06-05 11:00:57',NULL,NULL,0,NULL,NULL,NULL);
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trigger_auto_add_patroller` AFTER INSERT ON `users` FOR EACH ROW BEGIN
+    IF NEW.role_id = 3 THEN
+        INSERT IGNORE INTO active_patroller (officer_id)
+        VALUES (NEW.user_id);
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `update_users_updated_at` BEFORE UPDATE ON `users` FOR EACH ROW BEGIN
+    SET NEW.`updated_at` = CURRENT_TIMESTAMP;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+/*!50003 SET @saved_cs_client      = @@character_set_client */ ;
+/*!50003 SET @saved_cs_results     = @@character_set_results */ ;
+/*!50003 SET @saved_col_connection = @@collation_connection */ ;
+/*!50003 SET character_set_client  = utf8mb4 */ ;
+/*!50003 SET character_set_results = utf8mb4 */ ;
+/*!50003 SET collation_connection  = utf8mb4_0900_ai_ci */ ;
+/*!50003 SET @saved_sql_mode       = @@sql_mode */ ;
+/*!50003 SET sql_mode              = 'ONLY_FULL_GROUP_BY,STRICT_TRANS_TABLES,NO_ZERO_IN_DATE,NO_ZERO_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION' */ ;
+DELIMITER ;;
+/*!50003 CREATE*/ /*!50017 DEFINER=`root`@`localhost`*/ /*!50003 TRIGGER `trigger_auto_update_patroller_role` AFTER UPDATE ON `users` FOR EACH ROW BEGIN
+    IF OLD.role_id != NEW.role_id THEN
+
+        IF NEW.role_id = 3 THEN
+            INSERT IGNORE INTO active_patroller (officer_id)
+            VALUES (NEW.user_id);
+
+        ELSEIF OLD.role_id = 3 AND NEW.role_id != 3 THEN
+            DELETE FROM active_patroller
+            WHERE officer_id = NEW.user_id;
+
+        END IF;
+
+    END IF;
+END */;;
+DELIMITER ;
+/*!50003 SET sql_mode              = @saved_sql_mode */ ;
+/*!50003 SET character_set_client  = @saved_cs_client */ ;
+/*!50003 SET character_set_results = @saved_cs_results */ ;
+/*!50003 SET collation_connection  = @saved_col_connection */ ;
+
+--
+-- Dumping routines for database 'bantay'
+--
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
@@ -610,4 +712,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-06-04 13:27:47
+-- Dump completed on 2026-06-05 12:54:33

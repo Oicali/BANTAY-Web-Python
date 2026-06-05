@@ -10,14 +10,12 @@ from features.auth.auth_controller import (
 
 auth_bp = Blueprint("auth", __name__)
 
-# ── Public routes ─────────────────────────────────────────────────────────────
 auth_bp.post("/login")(login)
 auth_bp.post("/otp/send")(send_otp_handler)
 auth_bp.post("/otp/verify")(verify_otp_handler)
 auth_bp.post("/otp/resend")(resend_otp_handler)
 auth_bp.post("/password/reset")(reset_password)
 
-# ── Protected routes ──────────────────────────────────────────────────────────
 auth_bp.post("/logout")(authenticate(logout))
 auth_bp.post("/logout-all")(authenticate(logout_all))
 auth_bp.post("/password/change")(authenticate(change_password))
