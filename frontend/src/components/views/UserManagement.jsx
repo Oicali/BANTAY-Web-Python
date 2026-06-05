@@ -714,7 +714,7 @@ const UserManagement = () => {
                             <div className="um-user-cell-avatar">
                               {userData.profile_picture ? (
                                 <img
-                                  src={userData.profile_picture}
+                                  src={`${API_URL}${userData.profile_picture}`}
                                   alt="Profile"
                                   style={{
                                     width: "100%",

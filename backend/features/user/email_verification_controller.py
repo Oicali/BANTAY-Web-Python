@@ -1,24 +1,30 @@
-# backend\features\user\email_verification_controller.py
+"""
+email_verification_controller.py  (Flask / sync rewrite)
+Converted from the FastAPI async version.
+
+Assumptions about your Flask app:
+  - request.user  has a  .user_id  attribute  (set by your auth middleware)
+  - request.db    is a live MySQL connection   (set by your DB middleware)
+  - Plain-text password comparison (no hashing)
+"""
 
 import secrets
 import time
-import asyncio
+import threading
 from typing import Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Request
-from fastapi.responses import JSONResponse
-from pydantic import BaseModel, EmailStr
-import bcrypt
+from flask import Blueprint, request, jsonify, abort, g
 
+from config.database import get_db
 from features.user.email_service import send_otp_email, send_email_changed_notification
 
 # ---------------------------------------------------------------------------
-# Router
+# Blueprint
 # ---------------------------------------------------------------------------
-router = APIRouter(prefix="/users/email", tags=["email-verification"])
+bp = Blueprint("email_verification", __name__, url_prefix="/users/email")
 
 # ---------------------------------------------------------------------------
-# Constants  (mirror JS values exactly)
+# Constants  (mirror original values exactly)
 # ---------------------------------------------------------------------------
 OTP_EXPIRY_MS     = 2  * 60 * 1_000
 EMAIL_COOLDOWN_MS = 24 * 60 * 60 * 1_000
@@ -32,7 +38,7 @@ SESSION_LOCK_MS   = 15 * 60 * 1_000
 
 
 def _now() -> int:
-    """Current time in milliseconds (mirrors JS Date.now())."""
+    """Current time in milliseconds."""
     return int(time.time() * 1_000)
 
 
@@ -40,9 +46,6 @@ def _now() -> int:
 # In-memory stores
 # ---------------------------------------------------------------------------
 _sessions: dict[str, dict] = {}
-
-# Persistent locks — never deleted; survive clearSession()/logout/re-login.
-# Cleared only on successful email change or when resetExpiredLock fires.
 _persistent_locks: dict[str, dict] = {}
 
 
@@ -58,7 +61,6 @@ def _get_persistent_locks(user_id: str) -> dict:
 
 
 def _set_lock(user_id: str, lock_key: str, value: Optional[int]) -> None:
-    """Write a lock to both the active session AND the persistent store atomically."""
     key = str(user_id)
     _get_persistent_locks(key)[lock_key] = value
     if key in _sessions:
@@ -74,15 +76,14 @@ def _reset_expired_lock(
     window_count_key: Optional[str],
     attempts_key: Optional[str],
 ) -> None:
-    """Reset resend counters when a lock has expired so the user gets a clean window."""
     if session.get(lock_key) and _now() >= session[lock_key]:
-        session[lock_key]        = None
-        session[resends_key]     = 0
+        session[lock_key]         = None
+        session[resends_key]      = 0
         session[window_start_key] = None
         if window_count_key:
             session[window_count_key] = 0
         if attempts_key:
-            session[attempts_key]     = 0
+            session[attempts_key] = 0
         _set_lock(user_id, lock_key, None)
 
 
@@ -141,87 +142,63 @@ def _mask_email(email: str) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Dependency stubs — replace with your actual auth + DB dependencies
+# DB helpers  (mysql-connector-python)
 # ---------------------------------------------------------------------------
-# from your_app.deps import get_current_user, get_db
-# async def get_current_user(request: Request): ...
-# async def get_db(): ...
-#
-# For clarity, the endpoints below show the dependency parameters with type hints
-# matching what you'd inject.  Swap the stubs for real ones.
-# ---------------------------------------------------------------------------
-
-# ---------------------------------------------------------------------------
-# Request/response schemas
-# ---------------------------------------------------------------------------
-class VerifyPasswordBody(BaseModel):
-    password: str
-
-class OldOtpBody(BaseModel):
-    otp: str
-
-class NewEmailBody(BaseModel):
-    newEmail: str
-
-class NewOtpBody(BaseModel):
-    otp: str
-
-class ForceLockBody(BaseModel):
-    which: str  # "old" | "new"
-
-
-# ---------------------------------------------------------------------------
-# Helper: get user record from DB
-# (Replace the body with your actual DB query)
-# ---------------------------------------------------------------------------
-async def _get_user_by_id(user_id: str, db) -> Optional[dict]:
-    """Return a dict with at least: user_id, email, password, email_changed_at."""
-    result = await db.execute(
-        "SELECT user_id, email, password, email_changed_at FROM users WHERE user_id = $1",
+def _get_user_by_id(user_id: str, db) -> Optional[dict]:
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT user_id, email, password, email_changed_at FROM users WHERE user_id = %s",
         (user_id,),
     )
-    row = result.fetchone()
-    return dict(row) if row else None
+    row = cursor.fetchone()
+    cursor.close()
+    return row or None
 
 
-async def _update_email_changed_at(user_id: str, db) -> None:
-    await db.execute(
-        "UPDATE users SET email_changed_at = NOW() WHERE user_id = $1",
+def _update_email_changed_at(user_id: str, db) -> None:
+    cursor = db.cursor()
+    cursor.execute(
+        "UPDATE users SET email_changed_at = NOW() WHERE user_id = %s",
         (user_id,),
     )
-    await db.commit()
+    db.commit()
+    cursor.close()
 
 
-async def _update_user_email(user_id: str, new_email: str, db) -> None:
-    await db.execute(
-        "UPDATE users SET email = $1 WHERE user_id = $2",
+def _update_user_email(user_id: str, new_email: str, db) -> None:
+    cursor = db.cursor()
+    cursor.execute(
+        "UPDATE users SET email = %s WHERE user_id = %s",
         (new_email, user_id),
     )
-    await db.commit()
+    db.commit()
+    cursor.close()
+
+
+def _get_email_by_user_id(user_id: str, db) -> Optional[str]:
+    cursor = db.cursor(dictionary=True)
+    cursor.execute("SELECT email FROM users WHERE user_id = %s", (user_id,))
+    row = cursor.fetchone()
+    cursor.close()
+    return row["email"] if row else None
 
 
 # ---------------------------------------------------------------------------
 # STATUS CHECK
 # GET /users/email/status
 # ---------------------------------------------------------------------------
-@router.get("/status")
-async def get_email_status(
-    request: Request,
-    # current_user = Depends(get_current_user),
-    # db = Depends(get_db),
-):
-    """Called when the email-change modal opens."""
-    # Replace with: user_id = str(current_user.user_id)
-    user_id = str(request.state.user.user_id)
-    db = request.state.db
+@bp.get("/status")
+def get_email_status():
+    user_id = str(g.user["user_id"])
+    db = get_db()
 
-    user = await _get_user_by_id(user_id, db)
+    user = _get_user_by_id(user_id, db)
     if user and user.get("email_changed_at"):
-        since   = _now() - int(user["email_changed_at"].timestamp() * 1_000)
+        since = _now() - int(user["email_changed_at"].timestamp() * 1_000)
         if since < EMAIL_COOLDOWN_MS:
             ms_left    = EMAIL_COOLDOWN_MS - since
-            hours_left = -(-ms_left // 3_600_000)       # ceiling division
-            return {"blocked": True, "hoursLeft": hours_left, "msLeft": ms_left}
+            hours_left = -(-ms_left // 3_600_000)
+            return jsonify({"blocked": True, "hoursLeft": hours_left, "msLeft": ms_left})
 
     session = _get_session(user_id)
 
@@ -230,7 +207,7 @@ async def get_email_status(
 
     if session.get("pwLockedUntil") and _now() < session["pwLockedUntil"]:
         mins_left = -((session["pwLockedUntil"] - _now()) // -60_000)
-        return {"pwLocked": True, "minsLeft": mins_left}
+        return jsonify({"pwLocked": True, "minsLeft": mins_left})
 
     old_lock = session.get("oldOtpLockedUntil")
     new_lock = session.get("newOtpLockedUntil")
@@ -240,89 +217,82 @@ async def get_email_status(
     )
     if active_lock:
         mins_left = -((active_lock - _now()) // -60_000)
-        return {"sessionLocked": True, "minsLeft": mins_left}
+        return jsonify({"sessionLocked": True, "minsLeft": mins_left})
 
-    return {"blocked": False}
+    return jsonify({"blocked": False})
 
 
 # ---------------------------------------------------------------------------
 # FORCE LOCK
 # POST /users/email/force-lock
 # ---------------------------------------------------------------------------
-@router.post("/force-lock")
-async def force_lock(
-    body: ForceLockBody,
-    request: Request,
-):
-    user_id = str(request.state.user.user_id)
+@bp.post("/force-lock")
+def force_lock():
+    user_id = str(g.user["user_id"])
     session = _get_session(user_id)
+    body    = request.get_json(silent=True) or {}
+    which   = body.get("which", "")
 
-    if body.which == "old":
+    if which == "old":
         if session.get("oldOtpResends", 0) >= MAX_RESENDS:
             locked = session.get("oldOtpLockedUntil")
             if not locked or _now() >= locked:
                 _set_lock(user_id, "oldOtpLockedUntil", _now() + SESSION_LOCK_MS)
-    elif body.which == "new":
+    elif which == "new":
         if session.get("newOtpResends", 0) >= MAX_RESENDS:
             locked = session.get("newOtpLockedUntil")
             if not locked or _now() >= locked:
                 _set_lock(user_id, "newOtpLockedUntil", _now() + SESSION_LOCK_MS)
 
-    return {"success": True}
+    return jsonify({"success": True})
 
 
 # ---------------------------------------------------------------------------
 # STEP 1 — Verify current password
 # POST /users/email/verify-password
 # ---------------------------------------------------------------------------
-@router.post("/verify-password")
-async def verify_password(
-    body: VerifyPasswordBody,
-    request: Request,
-):
-    user_id  = str(request.state.user.user_id)
-    password = (body.password or "").strip()
+@bp.post("/verify-password")
+def verify_password():
+    user_id  = str(g.user["user_id"])
+    body     = request.get_json(silent=True) or {}
+    password = (body.get("password") or "").strip()
+
     if not password:
-        raise HTTPException(400, detail={"success": False, "message": "Password is required"})
+        return jsonify({"success": False, "message": "Password is required"}), 400
 
     session = _get_session(user_id)
-    db = request.state.db
+    db = get_db()
 
     _reset_expired_lock(user_id, session, "oldOtpLockedUntil", "oldOtpResends", "oldResendWindowStart", None, "oldOtpAttempts")
     _reset_expired_lock(user_id, session, "newOtpLockedUntil", "newOtpResends", "newResendWindowStart", None, "newOtpAttempts")
 
     if session.get("pwLockedUntil") and _now() < session["pwLockedUntil"]:
         mins_left = -((session["pwLockedUntil"] - _now()) // -60_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "locked": True,
-                "message": f"Too many incorrect attempts. Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
-                "minutesLeft": mins_left,
-            },
-        )
+        return jsonify({
+            "success": False, "locked": True,
+            "message": f"Too many incorrect attempts. Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
+            "minutesLeft": mins_left,
+        }), 429
 
-    user = await _get_user_by_id(user_id, db)
+    user = _get_user_by_id(user_id, db)
     if not user:
-        raise HTTPException(404, detail={"success": False, "message": "User not found"})
+        return jsonify({"success": False, "message": "User not found"}), 404
 
     if user.get("email_changed_at"):
         since = _now() - int(user["email_changed_at"].timestamp() * 1_000)
         if since < EMAIL_COOLDOWN_MS:
             hours_left = -((EMAIL_COOLDOWN_MS - since) // -3_600_000)
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "success": False, "cooldown": True,
-                    "message": f"You can only change your email once every 24 hours. "
-                               f"Try again in {hours_left} hour{'s' if hours_left != 1 else ''}.",
-                    "hoursLeft": hours_left,
-                },
-            )
+            return jsonify({
+                "success": False, "cooldown": True,
+                "message": (
+                    f"You can only change your email once every 24 hours. "
+                    f"Try again in {hours_left} hour{'s' if hours_left != 1 else ''}."
+                ),
+                "hoursLeft": hours_left,
+            }), 429
 
-    match = bcrypt.checkpw(password.encode(), user["password"].encode()
-                           if isinstance(user["password"], str) else user["password"])
-    if not match:
+    # Plain-text comparison (no hashing)
+    if password != user["password"]:
         session["pwAttempts"] = session.get("pwAttempts", 0) + 1
         attempts_left = PW_MAX_ATTEMPTS - session["pwAttempts"]
         if attempts_left <= 0:
@@ -330,57 +300,50 @@ async def verify_password(
             session["pwLockedUntil"] = lock_until
             session["pwAttempts"]    = 0
             _set_lock(user_id, "pwLockedUntil", lock_until)
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "success": False, "locked": True,
-                    "message": "Too many incorrect attempts. Try again in 15 minutes.",
-                    "minutesLeft": 15,
-                },
-            )
-        return JSONResponse(
-            status_code=401,
-            content={
-                "success": False,
-                "message": f"Incorrect password — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
-                "attemptsLeft": attempts_left,
-            },
-        )
+            return jsonify({
+                "success": False, "locked": True,
+                "message": "Too many incorrect attempts. Try again in 15 minutes.",
+                "minutesLeft": 15,
+            }), 429
+        return jsonify({
+            "success": False,
+            "message": f"Incorrect password — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
+            "attemptsLeft": attempts_left,
+        }), 401
 
     session["pwAttempts"]    = 0
     session["pwLockedUntil"] = None
     _set_lock(user_id, "pwLockedUntil", None)
     _clear_session(user_id)
     _get_session(user_id)["passwordVerified"] = True
-    return {"success": True}
+    return jsonify({"success": True})
 
 
 # ---------------------------------------------------------------------------
 # STEP 2 — Send OTP to current email
 # POST /users/email/request-old-otp
 # ---------------------------------------------------------------------------
-@router.post("/request-old-otp")
-async def request_old_otp(request: Request):
-    user_id = str(request.state.user.user_id)
+@bp.post("/request-old-otp")
+def request_old_otp():
+    user_id = str(g.user["user_id"])
     session = _get_session(user_id)
-    db = request.state.db
+    db = get_db()
 
     if not session.get("passwordVerified"):
-        raise HTTPException(403, detail={"success": False, "message": "Please verify your password first"})
+        return jsonify({"success": False, "message": "Please verify your password first"}), 403
 
     _reset_expired_lock(user_id, session, "oldOtpLockedUntil", "oldOtpResends", "oldResendWindowStart", None, "oldOtpAttempts")
 
     if session.get("oldOtpLockedUntil") and _now() < session["oldOtpLockedUntil"]:
         mins_left = -((session["oldOtpLockedUntil"] - _now()) // -60_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "sessionLocked": True,
-                "message": f"For security reasons, this process has been temporarily locked. "
-                           f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
-                "minutesLeft": mins_left,
-            },
-        )
+        return jsonify({
+            "success": False, "sessionLocked": True,
+            "message": (
+                f"For security reasons, this process has been temporarily locked. "
+                f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}."
+            ),
+            "minutesLeft": mins_left,
+        }), 429
 
     # Resend window
     window_start = session.get("oldResendWindowStart")
@@ -388,14 +351,11 @@ async def request_old_otp(request: Request):
         if session.get("oldOtpResends", 0) >= MAX_RESENDS:
             lock_until = _now() + SESSION_LOCK_MS
             _set_lock(user_id, "oldOtpLockedUntil", lock_until)
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "success": False, "sessionLocked": True,
-                    "message": "Maximum codes sent. For security, this process is locked for 15 minutes.",
-                    "minutesLeft": 15,
-                },
-            )
+            return jsonify({
+                "success": False, "sessionLocked": True,
+                "message": "Maximum codes sent. For security, this process is locked for 15 minutes.",
+                "minutesLeft": 15,
+            }), 429
     else:
         session["oldResendWindowStart"] = _now()
         session["oldOtpResends"]        = 0
@@ -408,22 +368,15 @@ async def request_old_otp(request: Request):
         and _now() - session["oldOtpSentAt"] < RESEND_WAIT_MS
     ):
         wait = -(-(RESEND_WAIT_MS - (_now() - session["oldOtpSentAt"])) // 1_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "resendLocked": True,
-                "message": f"Please wait {wait}s before resending",
-                "waitSeconds": wait,
-            },
-        )
+        return jsonify({
+            "success": False, "resendLocked": True,
+            "message": f"Please wait {wait}s before resending",
+            "waitSeconds": wait,
+        }), 429
 
-    result = await db.execute(
-        "SELECT email FROM users WHERE user_id = $1", (request.state.user.user_id,)
-    )
-    row = result.fetchone()
-    current_email = row["email"] if row else None
+    current_email = _get_email_by_user_id(g.user["user_id"], db)
     if not current_email:
-        raise HTTPException(400, detail={"success": False, "message": "No email address on file"})
+        return jsonify({"success": False, "message": "No email address on file"}), 400
 
     otp = str(secrets.randbelow(900_000) + 100_000)
     session["oldOtp"]           = otp
@@ -433,52 +386,52 @@ async def request_old_otp(request: Request):
     session["oldOtpResends"]    = session.get("oldOtpResends", 0) + 1
     session["oldEmailVerified"] = False
 
-    send_result = await send_otp_email(current_email, otp, "current")
+    send_result = send_otp_email(current_email, otp, "current")
     if not send_result.get("success"):
         session["oldOtpResends"] -= 1
-        return JSONResponse(status_code=500, content={"success": False, "message": "Failed to send code. Please try again."})
+        return jsonify({"success": False, "message": "Failed to send code. Please try again."}), 500
 
-    return {
+    return jsonify({
         "success": True,
         "maskedEmail": _mask_email(current_email),
         "resendsLeft": MAX_RESENDS - session["oldOtpResends"],
         "otpExpiresAt": session["oldOtpExpires"],
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
 # STEP 3 — Verify OTP from current email
 # POST /users/email/verify-old-otp
 # ---------------------------------------------------------------------------
-@router.post("/verify-old-otp")
-async def verify_old_otp(body: OldOtpBody, request: Request):
-    user_id   = str(request.state.user.user_id)
+@bp.post("/verify-old-otp")
+def verify_old_otp():
+    user_id   = str(g.user["user_id"])
     session   = _get_session(user_id)
-    submitted = (body.otp or "").strip()
+    body      = request.get_json(silent=True) or {}
+    submitted = (body.get("otp") or "").strip()
 
     if not session.get("passwordVerified"):
-        raise HTTPException(403, detail={"success": False, "message": "Please verify your password first"})
+        return jsonify({"success": False, "message": "Please verify your password first"}), 403
 
     _reset_expired_lock(user_id, session, "oldOtpLockedUntil", "oldOtpResends", "oldResendWindowStart", None, "oldOtpAttempts")
 
     if session.get("oldOtpLockedUntil") and _now() < session["oldOtpLockedUntil"]:
         mins_left = -((session["oldOtpLockedUntil"] - _now()) // -60_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "sessionLocked": True,
-                "message": f"For security reasons, this process has been temporarily locked. "
-                           f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
-                "minutesLeft": mins_left,
-            },
-        )
+        return jsonify({
+            "success": False, "sessionLocked": True,
+            "message": (
+                f"For security reasons, this process has been temporarily locked. "
+                f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}."
+            ),
+            "minutesLeft": mins_left,
+        }), 429
 
     if not session.get("oldOtp"):
-        raise HTTPException(400, detail={"success": False, "expired": True, "message": "No code pending — request a new one"})
+        return jsonify({"success": False, "expired": True, "message": "No code pending — request a new one"}), 400
 
     if _now() > session["oldOtpExpires"]:
         session["oldOtp"] = None
-        raise HTTPException(400, detail={"success": False, "expired": True, "message": "Code expired — request a new one"})
+        return jsonify({"success": False, "expired": True, "message": "Code expired — request a new one"}), 400
 
     session["oldOtpAttempts"] = session.get("oldOtpAttempts", 0) + 1
 
@@ -488,66 +441,61 @@ async def verify_old_otp(body: OldOtpBody, request: Request):
             if session.get("oldOtpResends", 0) >= MAX_RESENDS:
                 lock_until = _now() + SESSION_LOCK_MS
                 _set_lock(user_id, "oldOtpLockedUntil", lock_until)
-                return JSONResponse(
-                    status_code=429,
-                    content={
-                        "success": False, "sessionLocked": True,
-                        "message": "For security reasons, this process has been temporarily locked. Please try again after 15 minutes.",
-                        "minutesLeft": 15,
-                    },
-                )
-            return JSONResponse(
-                status_code=429,
-                content={"success": False, "attemptLocked": True, "message": "Too many incorrect attempts. Please request a new code.", "attemptsLeft": 0},
-            )
-        return JSONResponse(
-            status_code=400,
-            content={
-                "success": False,
-                "message": f"Incorrect code — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
-                "attemptsLeft": attempts_left,
-            },
-        )
+                return jsonify({
+                    "success": False, "sessionLocked": True,
+                    "message": "For security reasons, this process has been temporarily locked. Please try again after 15 minutes.",
+                    "minutesLeft": 15,
+                }), 429
+            return jsonify({
+                "success": False, "attemptLocked": True,
+                "message": "Too many incorrect attempts. Please request a new code.",
+                "attemptsLeft": 0,
+            }), 429
+        return jsonify({
+            "success": False,
+            "message": f"Incorrect code — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
+            "attemptsLeft": attempts_left,
+        }), 400
 
     session["oldOtp"]           = None
     session["oldEmailVerified"] = True
-    return {"success": True}
+    return jsonify({"success": True})
 
 
 # ---------------------------------------------------------------------------
 # STEP 4 — Send OTP to new email
 # POST /users/email/request-new-otp
 # ---------------------------------------------------------------------------
-@router.post("/request-new-otp")
-async def request_new_otp(body: NewEmailBody, request: Request):
-    user_id   = str(request.state.user.user_id)
+@bp.post("/request-new-otp")
+def request_new_otp():
+    user_id   = str(g.user["user_id"])
     session   = _get_session(user_id)
-    new_email = (body.newEmail or "").strip().lower()
-    db = request.state.db
+    body      = request.get_json(silent=True) or {}
+    new_email = (body.get("newEmail") or "").strip().lower()
+    db = get_db()
 
     if not session.get("passwordVerified") or not session.get("oldEmailVerified"):
-        raise HTTPException(403, detail={"success": False, "message": "Please complete the previous steps first"})
+        return jsonify({"success": False, "message": "Please complete the previous steps first"}), 403
 
     if not new_email:
-        raise HTTPException(400, detail={"success": False, "message": "New email is required"})
+        return jsonify({"success": False, "message": "New email is required"}), 400
 
     import re
     if not re.match(r"^[^\s@]+@[^\s@]+\.[^\s@]+$", new_email):
-        raise HTTPException(400, detail={"success": False, "message": "Invalid email format"})
+        return jsonify({"success": False, "message": "Invalid email format"}), 400
 
     _reset_expired_lock(user_id, session, "newOtpLockedUntil", "newOtpResends", "newResendWindowStart", None, "newOtpAttempts")
 
     if session.get("newOtpLockedUntil") and _now() < session["newOtpLockedUntil"]:
         mins_left = -((session["newOtpLockedUntil"] - _now()) // -60_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "sessionLocked": True,
-                "message": f"For security reasons, this process has been temporarily locked. "
-                           f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
-                "minutesLeft": mins_left,
-            },
-        )
+        return jsonify({
+            "success": False, "sessionLocked": True,
+            "message": (
+                f"For security reasons, this process has been temporarily locked. "
+                f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}."
+            ),
+            "minutesLeft": mins_left,
+        }), 429
 
     # Reset counters when email address changes
     if new_email != session.get("newEmail"):
@@ -562,31 +510,30 @@ async def request_new_otp(body: NewEmailBody, request: Request):
         if session.get("newOtpResends", 0) >= MAX_RESENDS:
             lock_until = _now() + SESSION_LOCK_MS
             _set_lock(user_id, "newOtpLockedUntil", lock_until)
-            return JSONResponse(
-                status_code=429,
-                content={
-                    "success": False, "sessionLocked": True,
-                    "message": "Maximum codes sent. For security, this process is locked for 15 minutes.",
-                    "minutesLeft": 15,
-                },
-            )
+            return jsonify({
+                "success": False, "sessionLocked": True,
+                "message": "Maximum codes sent. For security, this process is locked for 15 minutes.",
+                "minutesLeft": 15,
+            }), 429
     else:
         session["newResendWindowStart"] = _now()
         session["newOtpResends"]        = 0
 
     # Must differ from current
-    row = await db.execute("SELECT email FROM users WHERE user_id = $1", (request.state.user.user_id,))
-    row = row.fetchone()
-    if row and row["email"] and row["email"].lower() == new_email:
-        raise HTTPException(400, detail={"success": False, "message": "New email must be different from your current email"})
+    current_email = _get_email_by_user_id(g.user["user_id"], db)
+    if current_email and current_email.lower() == new_email:
+        return jsonify({"success": False, "message": "New email must be different from your current email"}), 400
 
     # Must not be taken
-    taken = await db.execute(
-        "SELECT user_id FROM users WHERE LOWER(email) = $1 AND user_id != $2",
-        (new_email, request.state.user.user_id),
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT user_id FROM users WHERE LOWER(email) = %s AND user_id != %s",
+        (new_email, g.user["user_id"]),
     )
-    if taken.fetchone():
-        return JSONResponse(status_code=409, content={"success": False, "message": "This email is already registered to another account"})
+    taken = cursor.fetchone()
+    cursor.close()
+    if taken:
+        return jsonify({"success": False, "message": "This email is already registered to another account"}), 409
 
     # 60s cooldown (bypassed when attempts exhausted)
     attempts_exhausted = session.get("newOtpAttempts", 0) >= OTP_MAX_ATTEMPTS
@@ -597,10 +544,11 @@ async def request_new_otp(body: NewEmailBody, request: Request):
         and _now() - session["newOtpSentAt"] < RESEND_WAIT_MS
     ):
         wait = -(-(RESEND_WAIT_MS - (_now() - session["newOtpSentAt"])) // 1_000)
-        return JSONResponse(
-            status_code=429,
-            content={"success": False, "resendLocked": True, "message": f"Please wait {wait}s before resending", "waitSeconds": wait},
-        )
+        return jsonify({
+            "success": False, "resendLocked": True,
+            "message": f"Please wait {wait}s before resending",
+            "waitSeconds": wait,
+        }), 429
 
     otp = str(secrets.randbelow(900_000) + 100_000)
     session["newEmail"]       = new_email
@@ -611,52 +559,52 @@ async def request_new_otp(body: NewEmailBody, request: Request):
     session["newOtpResends"]  = session.get("newOtpResends", 0) + 1
     session["verifiedEmail"]  = None
 
-    send_result = await send_otp_email(new_email, otp, "new")
+    send_result = send_otp_email(new_email, otp, "new")
     if not send_result.get("success"):
         session["newOtpResends"] -= 1
-        return JSONResponse(status_code=500, content={"success": False, "message": "Failed to send code. Please try again."})
+        return jsonify({"success": False, "message": "Failed to send code. Please try again."}), 500
 
-    return {
+    return jsonify({
         "success": True,
         "maskedEmail": _mask_email(new_email),
         "resendsLeft": MAX_RESENDS - session["newOtpResends"],
         "otpExpiresAt": session["newOtpExpires"],
-    }
+    })
 
 
 # ---------------------------------------------------------------------------
 # STEP 5 — Verify OTP from new email
 # POST /users/email/verify-new-otp
 # ---------------------------------------------------------------------------
-@router.post("/verify-new-otp")
-async def verify_new_otp(body: NewOtpBody, request: Request):
-    user_id   = str(request.state.user.user_id)
+@bp.post("/verify-new-otp")
+def verify_new_otp():
+    user_id   = str(g.user["user_id"])
     session   = _get_session(user_id)
-    submitted = (body.otp or "").strip()
+    body      = request.get_json(silent=True) or {}
+    submitted = (body.get("otp") or "").strip()
 
     if not session.get("passwordVerified") or not session.get("oldEmailVerified"):
-        raise HTTPException(403, detail={"success": False, "message": "Please complete the previous steps first"})
+        return jsonify({"success": False, "message": "Please complete the previous steps first"}), 403
 
     _reset_expired_lock(user_id, session, "newOtpLockedUntil", "newOtpResends", "newResendWindowStart", None, "newOtpAttempts")
 
     if session.get("newOtpLockedUntil") and _now() < session["newOtpLockedUntil"]:
         mins_left = -((session["newOtpLockedUntil"] - _now()) // -60_000)
-        return JSONResponse(
-            status_code=429,
-            content={
-                "success": False, "sessionLocked": True,
-                "message": f"For security reasons, this process has been temporarily locked. "
-                           f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}.",
-                "minutesLeft": mins_left,
-            },
-        )
+        return jsonify({
+            "success": False, "sessionLocked": True,
+            "message": (
+                f"For security reasons, this process has been temporarily locked. "
+                f"Try again in {mins_left} minute{'s' if mins_left != 1 else ''}."
+            ),
+            "minutesLeft": mins_left,
+        }), 429
 
     if not session.get("newOtp"):
-        raise HTTPException(400, detail={"success": False, "expired": True, "message": "No code pending — request a new one"})
+        return jsonify({"success": False, "expired": True, "message": "No code pending — request a new one"}), 400
 
     if _now() > session["newOtpExpires"]:
         session["newOtp"] = None
-        raise HTTPException(400, detail={"success": False, "expired": True, "message": "Code expired — request a new one"})
+        return jsonify({"success": False, "expired": True, "message": "Code expired — request a new one"}), 400
 
     session["newOtpAttempts"] = session.get("newOtpAttempts", 0) + 1
 
@@ -666,38 +614,37 @@ async def verify_new_otp(body: NewOtpBody, request: Request):
             if session.get("newOtpResends", 0) >= MAX_RESENDS:
                 lock_until = _now() + SESSION_LOCK_MS
                 _set_lock(user_id, "newOtpLockedUntil", lock_until)
-                return JSONResponse(
-                    status_code=429,
-                    content={
-                        "success": False, "sessionLocked": True,
-                        "message": "For security reasons, this process has been temporarily locked. Please try again after 15 minutes.",
-                        "minutesLeft": 15,
-                    },
-                )
-            return JSONResponse(
-                status_code=429,
-                content={"success": False, "attemptLocked": True, "message": "Too many incorrect attempts. Please request a new code.", "attemptsLeft": 0},
-            )
-        return JSONResponse(
-            status_code=400,
-            content={
-                "success": False,
-                "message": f"Incorrect code — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
-                "attemptsLeft": attempts_left,
-            },
-        )
+                return jsonify({
+                    "success": False, "sessionLocked": True,
+                    "message": "For security reasons, this process has been temporarily locked. Please try again after 15 minutes.",
+                    "minutesLeft": 15,
+                }), 429
+            return jsonify({
+                "success": False, "attemptLocked": True,
+                "message": "Too many incorrect attempts. Please request a new code.",
+                "attemptsLeft": 0,
+            }), 429
+        return jsonify({
+            "success": False,
+            "message": f"Incorrect code — {attempts_left} attempt{'s' if attempts_left != 1 else ''} remaining",
+            "attemptsLeft": attempts_left,
+        }), 400
 
-    verified_email     = session["newEmail"]
+    verified_email           = session["newEmail"]
     session["newOtp"]        = None
     session["verifiedEmail"] = verified_email
-    return {"success": True, "verifiedEmail": verified_email}
+    return jsonify({"success": True, "verifiedEmail": verified_email})
 
 
 # ---------------------------------------------------------------------------
 # Utility functions called externally (e.g. from a profile controller)
 # ---------------------------------------------------------------------------
-async def consume_session(user_id: str, db) -> None:
-    """Call after a successful email save in your profile controller."""
+def consume_session(user_id: str) -> None:
+    """
+    Call after a successful email save in your profile controller.
+    Runs send_email_changed_notification in a background thread so it
+    doesn't block the response (replaces asyncio.create_task).
+    """
     session   = _sessions.get(str(user_id))
     old_email = session.get("_oldEmailForNotification") if session else None
     new_email = session.get("verifiedEmail")             if session else None
@@ -708,10 +655,15 @@ async def consume_session(user_id: str, db) -> None:
     locks["pwLockedUntil"]     = None
 
     _clear_session(str(user_id))
-    await _update_email_changed_at(user_id, db)
+    _update_email_changed_at(user_id, get_db())
 
     if old_email and new_email:
-        asyncio.create_task(send_email_changed_notification(old_email, new_email))
+        t = threading.Thread(
+            target=send_email_changed_notification,
+            args=(old_email, new_email),
+            daemon=True,
+        )
+        t.start()
 
 
 def get_verified_email(user_id: str) -> Optional[str]:

@@ -178,7 +178,7 @@ class ProfileValidator:
                 errors["gender"] = gender_err
 
         # Phone fields (expects +63 prefix)
-        phone_err = cls.validate_phone(data.get("phone"), "Phone number", True)
+        phone_err = cls.validate_phone(data.get("phone"), "Phone number", False)
         if phone_err:
             errors["phone"] = phone_err
 

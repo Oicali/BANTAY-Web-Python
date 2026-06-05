@@ -1,4 +1,10 @@
-# backend/features/user/email_service.py
+"""
+email_service.py  (Flask / sync rewrite)
+Converted from the FastAPI async version.
+
+Uses `requests` instead of `httpx.AsyncClient`.
+asyncpg → mysql-connector-python cursor style.
+"""
 
 import html as html_lib
 import os
@@ -9,10 +15,8 @@ from datetime import datetime, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 
-import asyncpg
-import httpx
+import requests as http_requests
 from dotenv import load_dotenv
-
 
 load_dotenv()
 
@@ -36,7 +40,7 @@ def _esc(value) -> str:
 # BREVO HTTP EMAIL HELPER
 # ============================================================
 
-async def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
+def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
     """
     Send an email via Brevo Transactional Email API.
 
@@ -47,20 +51,13 @@ async def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
     Optional .env:
         BREVO_SENDER_NAME=BANTAY System
     """
-    api_key = _get_env("BREVO_API_KEY")
+    api_key      = _get_env("BREVO_API_KEY")
     sender_email = _get_env("BREVO_SENDER_EMAIL")
-    sender_name = os.getenv("BREVO_SENDER_NAME", "BANTAY System")
+    sender_name  = os.getenv("BREVO_SENDER_NAME", "BANTAY System")
 
     payload = {
-        "sender": {
-            "name": sender_name,
-            "email": sender_email,
-        },
-        "to": [
-            {
-                "email": to,
-            }
-        ],
+        "sender": {"name": sender_name, "email": sender_email},
+        "to":     [{"email": to}],
         "subject": subject,
         "htmlContent": html,
     }
@@ -70,17 +67,17 @@ async def send_brevo_email(*, to: str, subject: str, html: str) -> bool:
         "api-key": api_key,
     }
 
-    async with httpx.AsyncClient(timeout=15) as client:
-        response = await client.post(
-            "https://api.brevo.com/v3/smtp/email",
-            json=payload,
-            headers=headers,
-        )
+    response = http_requests.post(
+        "https://api.brevo.com/v3/smtp/email",
+        json=payload,
+        headers=headers,
+        timeout=15,
+    )
 
     if response.status_code == 429:
         raise RuntimeError("BREVO_RATE_LIMITED")
 
-    if not response.is_success:
+    if not response.ok:
         raise RuntimeError(
             f"Brevo API error: {response.status_code} {response.text}"
         )
@@ -97,19 +94,17 @@ def _initial(value: str) -> str:
     return value[0].upper() if value else "X"
 
 
-async def generate_username(
+def generate_username(
     first_name: str,
     middle_name: Optional[str],
     last_name: str,
     user_type: str,
-    conn: asyncpg.Connection,
+    db,          # mysql-connector-python connection
 ) -> str:
     """
     Generate username like:
         DJS26001_police
         DJS26001_barangay
-
-    Uses asyncpg, not SQLAlchemy.
     """
     yy = str(datetime.now(timezone.utc).year)[-2:]
 
@@ -117,18 +112,20 @@ async def generate_username(
     fi = _initial(first_name)
     mi = _initial(middle_name) if middle_name else ""
 
-    initials = f"{li}{fi}{mi}"
-    safe_user_type = re.sub(r"[^a-zA-Z0-9_]", "", user_type or "user")
+    initials        = f"{li}{fi}{mi}"
+    safe_user_type  = re.sub(r"[^a-zA-Z0-9_]", "", user_type or "user")
+    pattern         = rf"^[A-Z]{{2,3}}{yy}[0-9]+_{re.escape(safe_user_type)}$"
 
-    pattern = rf"^[A-Z]{{2,3}}{yy}[0-9]+_{re.escape(safe_user_type)}$"
-
-    row = await conn.fetchrow(
-        "SELECT COUNT(*) AS cnt FROM users WHERE username ~ $1",
-        pattern,
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        "SELECT COUNT(*) AS cnt FROM users WHERE username REGEXP %s",
+        (pattern,),
     )
+    row         = cursor.fetchone()
+    cursor.close()
 
     next_number = int(row["cnt"]) + 1 if row else 1
-    seq = str(next_number).zfill(3) if next_number < 1000 else str(next_number)
+    seq         = str(next_number).zfill(3) if next_number < 1000 else str(next_number)
 
     return f"{initials}{yy}{seq}_{safe_user_type}"
 
@@ -138,9 +135,9 @@ async def generate_username(
 # ============================================================
 
 def generate_password() -> str:
-    upper = string.ascii_uppercase
-    lower = string.ascii_lowercase
-    digits = string.digits
+    upper   = string.ascii_uppercase
+    lower   = string.ascii_lowercase
+    digits  = string.digits
     special = "!@#$%^&*"
     all_chars = upper + lower + digits + special
 
@@ -150,10 +147,8 @@ def generate_password() -> str:
         random.choice(digits),
         random.choice(special),
     ]
-
     chars += [random.choice(all_chars) for _ in range(8)]
     random.shuffle(chars)
-
     return "".join(chars)
 
 
@@ -284,14 +279,14 @@ def _html_doc(head_styles: str, body: str) -> str:
 # SEND VERIFICATION EMAIL
 # ============================================================
 
-async def send_verification_email(
+def send_verification_email(
     email: str,
     first_name: str,
     last_name: str,
     verification_url: str,
 ) -> dict:
-    first_name = _esc(first_name)
-    last_name = _esc(last_name)
+    first_name       = _esc(first_name)
+    last_name        = _esc(last_name)
     verification_url = _esc(verification_url)
 
     extra = """
@@ -364,29 +359,22 @@ async def send_verification_email(
     """
 
     try:
-        await send_brevo_email(
+        send_brevo_email(
             to=email,
             subject="BANTAY System – Verify Your Account",
             html=_html_doc(extra, body),
         )
-        return {
-            "success": True,
-            "message": "Verification email sent successfully",
-        }
+        return {"success": True, "message": "Verification email sent successfully"}
     except Exception as exc:
         print(f"send_verification_email error: {exc}")
-        return {
-            "success": False,
-            "message": "Failed to send verification email",
-            "error": str(exc),
-        }
+        return {"success": False, "message": "Failed to send verification email", "error": str(exc)}
 
 
 # ============================================================
 # SEND WELCOME EMAIL
 # ============================================================
 
-async def send_welcome_email(
+def send_welcome_email(
     email: str,
     first_name: str,
     last_name: str,
@@ -395,14 +383,12 @@ async def send_welcome_email(
     user_type: str,
     role: str,
 ) -> dict:
-    first_name = _esc(first_name)
-    last_name = _esc(last_name)
-    username = _esc(username)
-    password = _esc(password)
-    role = _esc(role)
-
-    user_type_label = "PNP" if user_type == "police" else "Barangay"
-    user_type_label = _esc(user_type_label)
+    first_name      = _esc(first_name)
+    last_name       = _esc(last_name)
+    username        = _esc(username)
+    password        = _esc(password)
+    role            = _esc(role)
+    user_type_label = _esc("PNP" if user_type == "police" else "Barangay")
 
     extra = """
       .credentials-box{
@@ -499,29 +485,22 @@ async def send_welcome_email(
     """
 
     try:
-        await send_brevo_email(
+        send_brevo_email(
             to=email,
             subject="BANTAY System – Your Account is Now Active",
             html=_html_doc(extra, body),
         )
-        return {
-            "success": True,
-            "message": "Welcome email sent successfully",
-        }
+        return {"success": True, "message": "Welcome email sent successfully"}
     except Exception as exc:
         print(f"send_welcome_email error: {exc}")
-        return {
-            "success": False,
-            "message": "Failed to send welcome email",
-            "error": str(exc),
-        }
+        return {"success": False, "message": "Failed to send welcome email", "error": str(exc)}
 
 
 # ============================================================
 # SEND OTP EMAIL
 # ============================================================
 
-async def send_otp_email(new_email: str, otp: str, type_: str = "new") -> dict:
+def send_otp_email(email: str, otp: str, type_: str = "new") -> dict:
     is_current = type_ == "current"
 
     subject = (
@@ -529,13 +508,11 @@ async def send_otp_email(new_email: str, otp: str, type_: str = "new") -> dict:
         if is_current
         else "BANTAY System – Verify Your New Email Address"
     )
-
     heading = (
         "Confirm Your Current Email"
         if is_current
         else "Verify Your New Email Address"
     )
-
     body_text = (
         "Someone requested an email address change on your account. "
         "Enter this code to confirm you own your current email:"
@@ -575,28 +552,20 @@ async def send_otp_email(new_email: str, otp: str, type_: str = "new") -> dict:
     """
 
     try:
-        await send_brevo_email(
-            to=new_email,
-            subject=subject,
-            html=_html_doc("", body),
-        )
+        send_brevo_email(to=email, subject=subject, html=_html_doc("", body))
         return {"success": True}
     except Exception as exc:
         print(f"send_otp_email error: {exc}")
-        return {
-            "success": False,
-            "message": "Failed to send verification email",
-            "error": str(exc),
-        }
+        return {"success": False, "message": "Failed to send verification email", "error": str(exc)}
 
 
 # ============================================================
 # SEND PASSWORD OTP EMAIL
 # ============================================================
 
-async def send_password_otp_email(email: str, first_name: str, otp: str) -> dict:
+def send_password_otp_email(email: str, first_name: str, otp: str) -> dict:
     first_name = _esc(first_name or "User")
-    otp = _esc(otp)
+    otp        = _esc(otp)
 
     body = f"""
       <div class="header">
@@ -632,7 +601,7 @@ async def send_password_otp_email(email: str, first_name: str, otp: str) -> dict
     """
 
     try:
-        await send_brevo_email(
+        send_brevo_email(
             to=email,
             subject="BANTAY System – Password Change Verification Code",
             html=_html_doc("", body),
@@ -640,22 +609,16 @@ async def send_password_otp_email(email: str, first_name: str, otp: str) -> dict
         return {"success": True}
     except Exception as exc:
         print(f"send_password_otp_email error: {exc}")
-        return {
-            "success": False,
-            "message": "Failed to send OTP email",
-            "error": str(exc),
-        }
+        return {"success": False, "message": "Failed to send OTP email", "error": str(exc)}
 
 
 # ============================================================
 # SEND PASSWORD CHANGED NOTIFICATION
 # ============================================================
 
-async def send_password_changed_notification(email: str, first_name: str) -> dict:
+def send_password_changed_notification(email: str, first_name: str) -> dict:
     first_name = _esc(first_name or "User")
-    now_ph = datetime.now(ZoneInfo("Asia/Manila")).strftime(
-        "%B %d, %Y, %I:%M %p"
-    )
+    now_ph     = datetime.now(ZoneInfo("Asia/Manila")).strftime("%B %d, %Y, %I:%M %p")
 
     body = f"""
       <div class="header">
@@ -684,7 +647,7 @@ async def send_password_changed_notification(email: str, first_name: str) -> dic
     """
 
     try:
-        await send_brevo_email(
+        send_brevo_email(
             to=email,
             subject="BANTAY System – Your Password Was Changed",
             html=_html_doc("", body),
@@ -699,10 +662,8 @@ async def send_password_changed_notification(email: str, first_name: str) -> dic
 # SEND EMAIL CHANGED NOTIFICATION
 # ============================================================
 
-async def send_email_changed_notification(old_email: str, new_email: str) -> dict:
-    now_ph = datetime.now(ZoneInfo("Asia/Manila")).strftime(
-        "%B %d, %Y, %I:%M %p"
-    )
+def send_email_changed_notification(old_email: str, new_email: str) -> dict:
+    now_ph = datetime.now(ZoneInfo("Asia/Manila")).strftime("%B %d, %Y, %I:%M %p")
 
     old_body = f"""
       <div class="header">
@@ -743,18 +704,16 @@ async def send_email_changed_notification(old_email: str, new_email: str) -> dic
     """
 
     try:
-        await send_brevo_email(
+        send_brevo_email(
             to=old_email,
             subject="BANTAY System – Your Account Email Has Been Changed",
             html=_html_doc("", old_body),
         )
-
-        await send_brevo_email(
+        send_brevo_email(
             to=new_email,
             subject="BANTAY System – Your Email Has Been Successfully Updated",
             html=_html_doc("", new_body),
         )
-
         return {"success": True}
     except Exception as exc:
         print(f"send_email_changed_notification error: {exc}")

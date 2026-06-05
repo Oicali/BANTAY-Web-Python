@@ -360,7 +360,9 @@ export default function ProfileSettings() {
     };
     setFormData(fv);
     setOriginalFormData(fv);
-    setProfilePicturePreview(ud.profile_picture || null);
+    setProfilePicturePreview(
+      ud.profile_picture ? `${API_URL}${ud.profile_picture}` : null,
+    );
   }, []);
 
   const fetchProfile = useCallback(async () => {

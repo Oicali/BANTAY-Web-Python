@@ -488,7 +488,7 @@ const PatrolScheduling = () => {
             </p>
           </div>
           <div className="psch-header-actions">
-            <button
+            {/* <button
               className="psch-btn psch-btn-outline"
               onClick={handleExportListClick}
               disabled={isExporting}
@@ -530,7 +530,7 @@ const PatrolScheduling = () => {
                   Export PDF
                 </>
               )}
-            </button>
+            </button> */}
             {isAdmin && (
               <button
                 className="psch-btn psch-btn-primary"

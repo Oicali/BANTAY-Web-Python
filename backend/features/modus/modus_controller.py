@@ -1,18 +1,10 @@
 # ================================================================================
-# FILE: backend/features/modus_controller.py
+# FILE: backend/features/modus/modus_controller.py
 # ================================================================================
 
-from fastapi import HTTPException, Request
+from flask import request, g, jsonify
 from shared.utils.audit_logger import log_audit
-
-import config.database as db
-
-
-def get_pool():
-    if db.pool is None:
-        raise RuntimeError("Database pool is not initialized")
-    return db.pool
-
+from config.database import get_db
 
 INDEX_CRIMES = {
     "MURDER",
@@ -27,15 +19,15 @@ INDEX_CRIMES = {
 }
 
 
-def get_client_ip(request: Request) -> str:
-    return request.client.host if request.client else "unknown"
+def get_client_ip() -> str:
+    return request.remote_addr or "unknown"
 
 
 # ── GET all modus ─────────────────────────────────────────────────────────────
 
-async def get_all_modus(request: Request):
+def get_all_modus():
     try:
-        sort_by = request.query_params.get("sort_by", "")
+        sort_by = request.args.get("sort_by", "")
 
         if sort_by == "created_at":
             order_by = "created_at DESC"
@@ -44,101 +36,84 @@ async def get_all_modus(request: Request):
         else:
             order_by = "crime_type, modus_name"
 
-        rows = await get_pool().fetch(
-            f"SELECT * FROM crime_modus_reference ORDER BY {order_by}"
-        )
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(f"SELECT * FROM crime_modus_reference ORDER BY {order_by}")
+        rows = cursor.fetchall()
+        cursor.close()
 
-        return {"success": True, "data": [dict(r) for r in rows]}
+        return jsonify({"success": True, "data": rows})
 
     except Exception as e:
         print(f"get_all_modus error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": "Failed to fetch modus list"},
-        )
+        return jsonify({"success": False, "message": "Failed to fetch modus list"}), 500
 
 
 # ── GET one modus ─────────────────────────────────────────────────────────────
 
-async def get_modus_by_id(request: Request):
+def get_modus_by_id(id):
     try:
-        modus_id = request.path_params["id"]
-
-        row = await get_pool().fetchrow(
-            "SELECT * FROM crime_modus_reference WHERE id = $1",
-            int(modus_id),
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+        cursor.execute(
+            "SELECT * FROM crime_modus_reference WHERE id = %s",
+            (int(id),),
         )
+        row = cursor.fetchone()
+        cursor.close()
 
         if not row:
-            raise HTTPException(
-                status_code=404,
-                detail={"success": False, "message": "Not found"},
-            )
+            return jsonify({"success": False, "message": "Not found"}), 404
 
-        return {"success": True, "data": dict(row)}
+        return jsonify({"success": True, "data": row})
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"get_modus_by_id error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": "Failed to fetch modus"},
-        )
+        return jsonify({"success": False, "message": "Failed to fetch modus"}), 500
 
 
 # ── POST create ───────────────────────────────────────────────────────────────
 
-async def create_modus(request: Request):
-    current_user = request.state.user
+def create_modus():
+    current_user = g.user
 
     try:
-        body = await request.json()
+        body        = request.get_json(silent=True) or {}
         crime_type  = (body.get("crime_type")  or "").strip()
         modus_name  = (body.get("modus_name")  or "").strip()
         description = (body.get("description") or "").strip() or None
 
         if not crime_type or not modus_name:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "success": False,
-                    "message": "crime_type and modus_name are required",
-                },
-            )
+            return jsonify({"success": False, "message": "crime_type and modus_name are required"}), 400
 
         if crime_type.upper() not in INDEX_CRIMES:
-            raise HTTPException(
-                status_code=400,
-                detail={"success": False, "message": "Invalid crime type"},
-            )
+            return jsonify({"success": False, "message": "Invalid crime type"}), 400
 
-        dup = await get_pool().fetchrow(
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute(
             """SELECT id FROM crime_modus_reference
-               WHERE UPPER(crime_type) = $1 AND LOWER(modus_name) = LOWER($2)""",
-            crime_type.upper(),
-            modus_name,
+               WHERE UPPER(crime_type) = %s AND LOWER(modus_name) = LOWER(%s)""",
+            (crime_type.upper(), modus_name),
         )
+        if cursor.fetchone():
+            cursor.close()
+            return jsonify({"success": False, "message": "Modus already exists for this crime type"}), 400
 
-        if dup:
-            raise HTTPException(
-                status_code=400,
-                detail={
-                    "success": False,
-                    "message": "Modus already exists for this crime type",
-                },
-            )
-
-        row = await get_pool().fetchrow(
+        cursor.execute(
             """INSERT INTO crime_modus_reference (crime_type, modus_name, description, is_active)
-               VALUES ($1, $2, $3, true)
-               RETURNING *""",
-            crime_type.upper(),
-            modus_name,
-            description,
+               VALUES (%s, %s, %s, TRUE)""",
+            (crime_type.upper(), modus_name, description),
         )
+        db.commit()
+        new_id = cursor.lastrowid
 
-        await log_audit(
+        cursor.execute("SELECT * FROM crime_modus_reference WHERE id = %s", (new_id,))
+        row = cursor.fetchone()
+        cursor.close()
+
+        log_audit(
             user_id=current_user.get("user_id"),
             username=current_user.get("username"),
             event_name="Modus Created",
@@ -146,59 +121,57 @@ async def create_modus(request: Request):
             action="CREATE",
             status="success",
             source="Web Portal",
-            ip_address=get_client_ip(request),
+            ip_address=get_client_ip(),
         )
 
-        return {"success": True, "data": dict(row)}
+        return jsonify({"success": True, "data": row}), 201
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"create_modus error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": "Failed to create modus"},
-        )
+        return jsonify({"success": False, "message": "Failed to create modus"}), 500
 
 
 # ── PATCH update ──────────────────────────────────────────────────────────────
 
-async def update_modus(request: Request):
-    current_user = request.state.user
+def update_modus(id):
+    current_user = g.user
 
     try:
-        modus_id = request.path_params["id"]
-        body     = await request.json()
-
+        body        = request.get_json(silent=True) or {}
         crime_type  = body.get("crime_type")
         modus_name  = body.get("modus_name")
-        description = body.get("description")   # may be intentionally None/null
-        is_active   = body.get("is_active")      # may be intentionally False
+        description = body.get("description")
+        is_active   = body.get("is_active")
 
-        row = await get_pool().fetchrow(
+        db = get_db()
+        cursor = db.cursor(dictionary=True)
+
+        cursor.execute(
             """UPDATE crime_modus_reference
                SET
-                 crime_type  = COALESCE($1, crime_type),
-                 modus_name  = COALESCE($2, modus_name),
-                 description = COALESCE($3, description),
-                 is_active   = COALESCE($4, is_active),
+                 crime_type  = COALESCE(%s, crime_type),
+                 modus_name  = COALESCE(%s, modus_name),
+                 description = COALESCE(%s, description),
+                 is_active   = COALESCE(%s, is_active),
                  updated_at  = NOW()
-               WHERE id = $5
-               RETURNING *""",
-            crime_type.upper() if crime_type else None,
-            modus_name or None,
-            description if description is not None else None,
-            is_active   if is_active   is not None else None,
-            int(modus_id),
+               WHERE id = %s""",
+            (
+                crime_type.upper() if crime_type else None,
+                modus_name or None,
+                description if description is not None else None,
+                is_active   if is_active   is not None else None,
+                int(id),
+            ),
         )
+        db.commit()
 
-        if not row:
-            raise HTTPException(
-                status_code=404,
-                detail={"success": False, "message": "Not found"},
-            )
+        if cursor.rowcount == 0:
+            cursor.close()
+            return jsonify({"success": False, "message": "Not found"}), 404
 
-        updated = dict(row)
+        cursor.execute("SELECT * FROM crime_modus_reference WHERE id = %s", (int(id),))
+        updated = cursor.fetchone()
+        cursor.close()
 
         if is_active is False:
             event_name = "Modus Deactivated"
@@ -207,7 +180,7 @@ async def update_modus(request: Request):
         else:
             event_name = "Modus Updated"
 
-        await log_audit(
+        log_audit(
             user_id=current_user.get("user_id"),
             username=current_user.get("username"),
             event_name=event_name,
@@ -215,16 +188,11 @@ async def update_modus(request: Request):
             action="UPDATE",
             status="success",
             source="Web Portal",
-            ip_address=get_client_ip(request),
+            ip_address=get_client_ip(),
         )
 
-        return {"success": True, "data": updated}
+        return jsonify({"success": True, "data": updated})
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"update_modus error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": "Failed to update modus"},
-        )
+        return jsonify({"success": False, "message": "Failed to update modus"}), 500

@@ -1,71 +1,48 @@
-import asyncpg, ssl, os, signal
+# config/database.py
+import os
+import mysql.connector
+from mysql.connector import pooling
+from flask import g
 from dotenv import load_dotenv
 
 load_dotenv()
 
 # ── 1. Validate required env vars ─────────────────────────────────────────────
-REQUIRED_ENV = ["DB_USER", "DB_PASS", "DB_HOST", "DB_PORT", "DB_NAME"]
+REQUIRED_ENV = ["DB_USER", "DB_PASS"]
 missing = [key for key in REQUIRED_ENV if not os.getenv(key)]
 if missing:
     print(f"❌ Missing required environment variables: {', '.join(missing)}")
     exit(1)
 
-# ── 2. SSL configuration ──────────────────────────────────────────────────────
-def build_ssl_context():
-    ssl_ctx = ssl.create_default_context()
+# ── 2. Pool instance ──────────────────────────────────────────────────────────
+_pool = None
 
-    if os.getenv("DB_SSL_CA_CONTENT"):
-        ca = os.getenv("DB_SSL_CA_CONTENT").replace("\\n", "\n")
-        ssl_ctx.load_verify_locations(cadata=ca)
-        print("🔐 SSL: using cert from DB_SSL_CA_CONTENT")
-
-    elif os.getenv("DB_SSL_CA"):
-        ssl_ctx.load_verify_locations(cafile=os.getenv("DB_SSL_CA"))
-        print("🔐 SSL: using cert from DB_SSL_CA file")
-
-    else:
-        ssl_ctx.check_hostname = False
-        ssl_ctx.verify_mode = ssl.CERT_NONE
-        print("🔐 SSL: no cert (Railway mode)")
-
-    return ssl_ctx
-
-# ── 3. Pool instance (set during init_db) ─────────────────────────────────────
-pool: asyncpg.Pool = None
-
-# ── 4. Init pool (called in main.py lifespan) ─────────────────────────────────
-async def init_db():
-    global pool
-    ssl_ctx = build_ssl_context()
-
-    pool = await asyncpg.create_pool(
+# ── 3. Init pool (called once at startup in main.py) ─────────────────────────
+def init_db():
+    global _pool
+    _pool = pooling.MySQLConnectionPool(
+        pool_name="bantay_pool",
+        pool_size=10,
+        host=os.getenv("DB_HOST", "localhost"),
+        port=int(os.getenv("DB_PORT", 3306)),
         user=os.getenv("DB_USER"),
         password=os.getenv("DB_PASS"),
-        host=os.getenv("DB_HOST"),
-        port=int(os.getenv("DB_PORT")),
-        database=os.getenv("DB_NAME"),
-        ssl=ssl_ctx,
-        min_size=0,
-        max_size=10,
-        command_timeout=30,
-        # replaces pool.on("connect") — runs on every new connection
-        init=_configure_connection,
+        database=os.getenv("DB_NAME", "bantay"),
+        time_zone="+08:00",
     )
-    print("🗄️ PostgreSQL pool created")
+    print("🗄️ MySQL pool created")
 
-# ── 5. Per-connection config (replaces pool.on("connect")) ────────────────────
-async def _configure_connection(conn):
-    await conn.execute("SET TIMEZONE = 'Asia/Manila'")
-    await conn.execute("SET statement_timeout = '30s'")
+# ── 4. Get connection per request (stored in Flask's g) ───────────────────────
+def get_db():
+    if "db" not in g:
+        g.db = _pool.get_connection()
+    return g.db
 
-# ── 6. Close pool (called in main.py lifespan on shutdown) ────────────────────
-async def close_db():
-    global pool
-    if pool:
-        await pool.close()
-        print("🗄️ PostgreSQL pool closed")
+# ── 5. Close connection after each request ────────────────────────────────────
+def close_db(error=None):
+    db = g.pop("db", None)
+    if db and db.is_connected():
+        db.close()
 
-# ── 7. Dependency for routes — yields a connection from the pool ───────────────
-async def get_db():
-    async with pool.acquire() as conn:
-        yield conn
+def get_pool():
+    return _pool

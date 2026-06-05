@@ -1,4 +1,6 @@
-from fastapi import APIRouter, Request, Depends
+# backend/features/auth/auth_routes.py
+
+from flask import Blueprint
 from shared.middleware.token_middleware import authenticate
 from features.auth.auth_controller import (
     login, logout, logout_all,
@@ -6,16 +8,16 @@ from features.auth.auth_controller import (
     reset_password, change_password,
 )
 
-router = APIRouter()
+auth_bp = Blueprint("auth", __name__)
 
 # ── Public routes ─────────────────────────────────────────────────────────────
-router.post("/login")(login)
-router.post("/otp/send")(send_otp_handler)
-router.post("/otp/verify")(verify_otp_handler)
-router.post("/otp/resend")(resend_otp_handler)
-router.post("/password/reset")(reset_password)
+auth_bp.post("/login")(login)
+auth_bp.post("/otp/send")(send_otp_handler)
+auth_bp.post("/otp/verify")(verify_otp_handler)
+auth_bp.post("/otp/resend")(resend_otp_handler)
+auth_bp.post("/password/reset")(reset_password)
 
 # ── Protected routes ──────────────────────────────────────────────────────────
-router.post("/logout")(authenticate(logout))
-router.post("/logout-all")(authenticate(logout_all))
-router.post("/password/change")(authenticate(change_password))
+auth_bp.post("/logout")(authenticate(logout))
+auth_bp.post("/logout-all")(authenticate(logout_all))
+auth_bp.post("/password/change")(authenticate(change_password))

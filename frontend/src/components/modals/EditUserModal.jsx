@@ -1,3 +1,5 @@
+// frontend\src\components\modals\EditUserModal.jsx
+
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Eye, EyeOff } from "lucide-react";
 import { getUserFromToken } from "../../utils/auth";

@@ -1289,6 +1289,7 @@ const AddUserModal = ({ isOpen, onClose, onUserAdded }) => {
                         onChange={handleChange}
                         className="aum-form-input"
                       >
+                        <option value="Technical Administrator">Technical Administrator</option>
                         <option value="Administrator">Administrator</option>
                         <option value="Investigator">Investigator</option>
                         <option value="Patrol">Patrol</option>

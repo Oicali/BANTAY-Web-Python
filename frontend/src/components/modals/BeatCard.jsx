@@ -154,14 +154,14 @@ const [patrollerPage, setPatrollerPage]     = useState(1);
             </div>
           </div>
           <div className="bc-header-actions">
-            <button
+            {/* <button
               className="bc-btn"
               disabled={isPreviewing}
               style={{ background: "#1e3a5f", color: "#fff", border: "none", fontWeight: 700 }}
               onClick={handleExportClick}
             >
               {isPreviewing ? "Generating…" : "Export PDF"}
-            </button>
+            </button> */}
             {!hideEdit   && <button className="bc-btn bc-btn-edit"   onClick={onEdit}>Edit</button>}
             {!hideDelete && <button className="bc-btn bc-btn-delete" onClick={() => setShowDeleteConfirm(true)}>Delete</button>}
             <button className="bc-btn bc-btn-close"  onClick={onClose}>✕</button>

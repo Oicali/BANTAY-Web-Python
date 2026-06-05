@@ -2,7 +2,7 @@
 # FILE: backend/features/modus/modus_routes.py
 # ================================================================================
 
-from fastapi import APIRouter
+from flask import Blueprint
 from shared.middleware.token_middleware import authenticate
 from features.modus.modus_controller import (
     get_all_modus,
@@ -11,9 +11,9 @@ from features.modus.modus_controller import (
     update_modus,
 )
 
-router = APIRouter()
+modus_bp = Blueprint("modus", __name__)
 
-router.add_api_route("/",    authenticate(get_all_modus),  methods=["GET"])
-router.add_api_route("/{id}", authenticate(get_modus_by_id), methods=["GET"])
-router.add_api_route("/",    authenticate(create_modus),   methods=["POST"])
-router.add_api_route("/{id}", authenticate(update_modus),  methods=["PATCH"])
+modus_bp.add_url_rule("",      view_func=authenticate(get_all_modus), methods=["GET"])
+modus_bp.add_url_rule("/<id>", view_func=authenticate(get_modus_by_id), methods=["GET"])
+modus_bp.add_url_rule("",      view_func=authenticate(create_modus),  methods=["POST"])
+modus_bp.add_url_rule("/<id>", view_func=authenticate(update_modus),  methods=["PATCH"])

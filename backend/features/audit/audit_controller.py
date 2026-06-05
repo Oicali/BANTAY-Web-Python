@@ -1,88 +1,69 @@
-# ================================================================================
-# FILE: backend/features/audit/audit_controller.py
-# ================================================================================
+# backend/features/audit/audit_controller.py
 
 import math
-from fastapi import HTTPException, Request
-
-import config.database as db
-
-
-def get_pool():
-    if db.pool is None:
-        raise RuntimeError("Database pool is not initialized")
-    return db.pool
-
+from flask import request, g, jsonify
+from config.database import get_db
 
 RESTRICTED_ROLES = {"Brgy. Captain", "Brgy. Official", "Investigator", "Patrol"}
 
 
-async def get_audit_logs(request: Request):
+def get_audit_logs():
     try:
-        params = request.query_params
-
-        page  = max(1, int(params.get("page",  1)))
-        limit = min(100, int(params.get("limit", 15)))
+        page   = max(1, int(request.args.get("page",  1)))
+        limit  = min(100, int(request.args.get("limit", 15)))
         offset = (page - 1) * limit
 
-        search   = (params.get("search")   or "").strip()
-        action   = (params.get("action")   or "").strip()
-        status   = (params.get("status")   or "").strip()
-        date_from = params.get("dateFrom")
-        date_to   = params.get("dateTo")
+        search    = (request.args.get("search")   or "").strip()
+        action    = (request.args.get("action")   or "").strip()
+        status    = (request.args.get("status")   or "").strip()
+        date_from = request.args.get("dateFrom")
+        date_to   = request.args.get("dateTo")
 
-        current_user  = request.state.user
+        current_user  = g.user
         is_restricted = current_user.get("role") in RESTRICTED_ROLES
 
-        # ── Build WHERE clauses dynamically ──
+        # ── Build WHERE clauses dynamically ──────────────────────────────────
         conditions: list[str] = []
         values:     list      = []
 
-        def p() -> str:
-            """Next positional placeholder."""
-            return f"${len(values)}"
-
         if is_restricted:
+            conditions.append("al.user_id = %s")
             values.append(current_user["user_id"])
-            conditions.append(f"al.user_id = {p()}")
 
         if search:
-            values.append(f"%{search}%")
-            n = p()
             conditions.append(
-                f"(al.username ILIKE {n} OR al.ip_address ILIKE {n} "
-                f"OR al.description ILIKE {n} OR al.event_name ILIKE {n})"
+                "(al.username LIKE %s OR al.ip_address LIKE %s "
+                "OR al.description LIKE %s OR al.event_name LIKE %s)"
             )
+            values.extend([f"%{search}%"] * 4)
 
         if action and action != "all":
+            conditions.append("al.action = %s")
             values.append(action.upper())
-            conditions.append(f"al.action = {p()}")
 
         if status and status != "all":
+            conditions.append("al.status = %s")
             values.append(status.lower())
-            conditions.append(f"al.status = {p()}")
 
         if date_from:
+            conditions.append("al.created_at >= %s")
             values.append(date_from)
-            conditions.append(f"al.created_at >= {p()}::date")
 
         if date_to:
+            conditions.append("al.created_at < DATE_ADD(%s, INTERVAL 1 DAY)")
             values.append(date_to)
-            conditions.append(f"al.created_at < ({p()}::date + INTERVAL '1 day')")
 
         where = f"WHERE {' AND '.join(conditions)}" if conditions else ""
 
-        pool = get_pool()
+        conn   = get_db()
+        cursor = conn.cursor(dictionary=True)
 
-        # ── Count query ──
-        count_row = await pool.fetchrow(
-            f"SELECT COUNT(*) AS cnt FROM audit_logs al {where}",
-            *values,
-        )
-        total = int(count_row["cnt"])
+        # ── Count query ───────────────────────────────────────────────────────
+        cursor.execute(f"SELECT COUNT(*) AS cnt FROM audit_logs al {where}", values)
+        total = int(cursor.fetchone()["cnt"])
 
-        # ── Data query ──
-        data_rows = await pool.fetch(
+        # ── Data query ────────────────────────────────────────────────────────
+        cursor.execute(
             f"""SELECT
                     al.log_id,
                     al.user_id,
@@ -105,39 +86,39 @@ async def get_audit_logs(request: Request):
                 LEFT JOIN pnp_ranks pr ON u.rank_id  = pr.rank_id
                 {where}
                 ORDER BY al.created_at DESC
-                LIMIT  ${len(values) + 1}
-                OFFSET ${len(values) + 2}""",
-            *values, limit, offset,
+                LIMIT %s OFFSET %s""",
+            values + [limit, offset],
         )
+        data_rows = cursor.fetchall()
 
-        # ── Stats ──
+        # ── Stats ─────────────────────────────────────────────────────────────
         if is_restricted:
-            stats_row = await pool.fetchrow(
+            cursor.execute(
                 """SELECT
-                       COUNT(*)                                            AS total,
-                       COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE) AS today,
-                       COUNT(DISTINCT user_id)                            AS unique_users,
-                       COUNT(*) FILTER (WHERE status = 'failed')          AS failed
+                       COUNT(*)                                                  AS total,
+                       SUM(created_at >= CURDATE())                              AS today,
+                       COUNT(DISTINCT user_id)                                   AS unique_users,
+                       SUM(status = 'failed')                                    AS failed
                    FROM audit_logs
-                   WHERE user_id = $1""",
-                current_user["user_id"],
+                   WHERE user_id = %s""",
+                (current_user["user_id"],),
             )
         else:
-            stats_row = await pool.fetchrow(
+            cursor.execute(
                 """SELECT
-                       COUNT(*)                                            AS total,
-                       COUNT(*) FILTER (WHERE created_at >= CURRENT_DATE) AS today,
-                       COUNT(DISTINCT user_id)                            AS unique_users,
-                       COUNT(*) FILTER (WHERE status = 'failed')          AS failed
+                       COUNT(*)                                                  AS total,
+                       SUM(created_at >= CURDATE())                              AS today,
+                       COUNT(DISTINCT user_id)                                   AS unique_users,
+                       SUM(status = 'failed')                                    AS failed
                    FROM audit_logs"""
             )
+        stats_row = cursor.fetchone()
+        cursor.close()
 
-        # ── Shape log rows ──
+        # ── Shape log rows ────────────────────────────────────────────────────
         logs = []
         for row in data_rows:
-            row = dict(row)
             display_name = row.get("username") or ""
-
             if row.get("first_name"):
                 parts = [
                     f"{row['rank_abbr']}." if row.get("rank_abbr") else "",
@@ -150,10 +131,12 @@ async def get_audit_logs(request: Request):
 
             row["display_name"] = display_name
             row["role_name"]    = row.get("role_name") or "—"
-            # asyncpg returns datetime objects — keep as-is; FastAPI serialises them
+            # Convert datetime to string for JSON serialization
+            if row.get("created_at"):
+                row["created_at"] = str(row["created_at"])
             logs.append(row)
 
-        return {
+        return jsonify({
             "logs": logs,
             "pagination": {
                 "total":      total,
@@ -162,18 +145,13 @@ async def get_audit_logs(request: Request):
                 "totalPages": math.ceil(total / limit) if total else 1,
             },
             "stats": {
-                "total":       int(stats_row["total"]),
-                "today":       int(stats_row["today"]),
-                "uniqueUsers": int(stats_row["unique_users"]),
-                "failed":      int(stats_row["failed"]),
+                "total":       int(stats_row["total"]        or 0),
+                "today":       int(stats_row["today"]        or 0),
+                "uniqueUsers": int(stats_row["unique_users"] or 0),
+                "failed":      int(stats_row["failed"]       or 0),
             },
-        }
+        }), 200
 
-    except HTTPException:
-        raise
     except Exception as e:
         print(f"get_audit_logs error: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail={"success": False, "message": "Failed to fetch audit logs"},
-        )
+        return jsonify({"success": False, "message": "Failed to fetch audit logs"}), 500

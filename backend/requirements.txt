@@ -1,12 +1,6 @@
-fastapi
-uvicorn[standard]
-asyncpg
+flask
+flask-cors
+mysql-connector-python
 python-dotenv
-cloudinary
-python-jose[cryptography]
-bcrypt
-python-multipart
-aiosmtplib
-httpx
-python-docx
-openpyxl
+requests
+reportlab
